@@ -431,3 +431,8 @@ export const NEETCODE_PROFILE = "https://neetcode.io/profile"
 export const SHRADHA_SHEET = "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/"
 export const LEETCODE_DAILY = "https://leetcode.com/problemset/"
 export const LEETCODE_PROFILE = "https://leetcode.com/"
+
+export const BREAK_DAYS = new Set([
+  '2026-05-01','2026-06-15','2026-07-04','2026-08-15',
+  '2026-09-05','2026-10-02','2026-10-24','2026-11-14','2026-12-25',
+])
