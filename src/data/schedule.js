@@ -426,3 +426,4 @@ export function getVerifyChallenge(verifyType) {
   const arr = VERIFY_CHALLENGES[verifyType] || VERIFY_CHALLENGES.java
   return arr[Math.floor(Math.random() * arr.length)]
 }
+export function isBreakDay(dateStr) { return BREAK_DAYS.has(dateStr) }
