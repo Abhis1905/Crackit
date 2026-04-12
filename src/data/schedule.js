@@ -426,3 +426,8 @@ export function getVerifyChallenge(verifyType) {
   const arr = VERIFY_CHALLENGES[verifyType] || VERIFY_CHALLENGES.java
   return arr[Math.floor(Math.random() * arr.length)]
 }
+
+export const NEETCODE_PROFILE = "https://neetcode.io/profile"
+export const SHRADHA_SHEET = "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/"
+export const LEETCODE_DAILY = "https://leetcode.com/problemset/"
+export const LEETCODE_PROFILE = "https://leetcode.com/"
