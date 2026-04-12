@@ -1,6 +1,6 @@
 # ☀️ Summer Break Crack — FAANG Prep 2026
 
-Your personal tutor. Your accountability system. Your path to JPMC/PayPal.
+My personal tutor. Your accountability system. MY path to JPMC/PayPal.
 
 ---
 
