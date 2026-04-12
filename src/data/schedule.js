@@ -650,7 +650,20 @@ export function getScheduleForDate(dateStr) {
     }
   }
 
-  const p6DayNum = Math.floor((date - phase6Start) / (24*60*60*1000))
+  if (date < phase1Start) {
+    return {
+      phase: 0, phaseColor: "#ff6b1a",
+      title: "🚀 PROGRAM STARTS TOMORROW",
+      subtitle: "April 14 is Day 1. Rest up. The grind begins tomorrow.",
+      hoursAvailable: "0 hrs",
+      isBreak: true,
+      tasks: [
+        makeTask('pre1', "Set up your Supabase DB using the SQL in the README", 'build'),
+        makeTask('pre2', "Bookmark: NeetCode, Shradha Sheet, IndiaBix", 'build'),
+        makeTask('pre3', "Sleep early. Tomorrow is Day 1.", 'rest'),
+      ]
+    }
+  }const p6DayNum = Math.floor((date - phase6Start) / (24*60*60*1000))
   const p6WeekIdx = Math.min(Math.floor(p6DayNum / 7), P6_WEEKS.length - 1)
   const p6w = P6_WEEKS[p6WeekIdx]
   return {
