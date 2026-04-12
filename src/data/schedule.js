@@ -1,12 +1,3 @@
-# Check if we need BREAK_DAYS exported for CalendarView
-# The full schedule from doc[2] has BREAK_DAYS as a Set
-# Let's write the full schedule.js from scratch with everything needed
-
-
-// ============================================================
-// CRACKIT — COMPLETE BATTLE PLAN
-// Abhishek | Apr 14 2026 → Dec 31 2026 → Jan 2027
-// Goal: JPMC / PayPal / Top MNC — DSA + Spring Boot + React + AI/ML + Aptitude + Communication
 // ============================================================
 
 export const PHASES = [
