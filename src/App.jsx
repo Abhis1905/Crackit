@@ -1,3 +1,4 @@
+import ResourceHub from './components/ResourceHub'
 import QuickLinks from './components/QuickLinks'
 import { useState, useEffect } from 'react'
 import ThreeBackground from './components/ThreeBackground'
