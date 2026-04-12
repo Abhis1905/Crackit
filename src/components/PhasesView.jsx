@@ -1,170 +1,463 @@
-import { PHASES, NEETCODE_ROADMAP, DSA_SHEET } from '../data/schedule'
+import { useState, useEffect, useRef } from 'react'
+import { PHASES, NEETCODE_ROADMAP, SHRADHA_SHEET } from '../data/schedule'
+
+const DSA_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_PoEEiE6lk79cmT1kqJpsnkB14b5ImdKpDrXoPBsw2U/edit?usp=sharing"
 
 const PHASE_DETAILS = [
   {
     id: 1,
+    icon: "🔥",
+    color: "#f97316",
+    glow: "rgba(249,115,22,0.4)",
+    duration: "Apr 14 – Jun 1 · 48 days · Full day available",
+    mission: "Build Java foundations + DSA base. No shortcuts. This phase determines everything.",
+    checkpoint: "65 LC problems · 1 deployed Java project · NeetCode streak started",
     weeks: [
-      { label: "Week 1 (Apr 14–20)", topics: "Java syntax, data types, loops, methods + Arrays two-pointer", lc: "10 problems", build: "Calculator CLI" },
-      { label: "Week 2 (Apr 21–27)", topics: "OOP — classes, inheritance, polymorphism in Java", lc: "20 total", build: "Bank Account OOP model" },
-      { label: "Week 3 (Apr 28–May 3)", topics: "Collections, HashMap, Generics + Recursion", lc: "30 total", build: "Student Grade Manager CLI" },
-      { label: "Week 4 (May 4–10)", topics: "LinkedList from scratch — Node, add/remove/reverse", lc: "40 total", build: "Your own LinkedList class" },
-      { label: "Week 5 (May 11–17)", topics: "Stack + Queue — array-backed and linked-backed", lc: "50 total", build: "Expression Evaluator CLI" },
-      { label: "Week 6 (May 18–24)", topics: "Binary Trees — DFS, BFS, level order", lc: "57 total", build: "Tree Visualizer CLI" },
-      { label: "Week 7 (May 25–Jun 1)", topics: "HashMap deep dive + consolidation + deploy", lc: "65 total", build: "Deploy project to GitHub" },
+      { label: "Week 1", dates: "Apr 14–20", topics: "Java syntax, data types, loops, methods", dsa: "Arrays: Contains Dup, Valid Anagram, Two Sum", build: "Calculator CLI", apt: "% + Ratios 20q" },
+      { label: "Week 2", dates: "Apr 21–27", topics: "OOP — Classes, Inheritance, Polymorphism", dsa: "Two Pointers: Palindrome, 3Sum, Container", build: "Bank Account OOP", apt: "Time & Work 20q" },
+      { label: "Week 3", dates: "Apr 28–May 4", topics: "Collections, HashMap, Generics", dsa: "Sliding Window: Buy Stock, Longest Substr", build: "Grade Manager CLI", apt: "Profit & Loss 20q" },
+      { label: "Week 4", dates: "May 5–11", topics: "Exceptions, File I/O, Java 8 Streams", dsa: "LinkedList: Reverse, Merge Sorted, Cycle", build: "Custom LinkedList Java", apt: "Permutations 20q" },
+      { label: "Week 5", dates: "May 12–18", topics: "Multithreading basics, JDBC intro", dsa: "Stack: Valid Parens, Min Stack, Daily Temps", build: "Expression Evaluator CLI", apt: "Logical Reasoning 20q" },
+      { label: "Week 6", dates: "May 19–25", topics: "Design Patterns: Singleton, Factory, Builder", dsa: "Trees: Invert, Max Depth, Diameter, BFS", build: "BinaryTree Java impl", apt: "Verbal basics 20q" },
+      { label: "Week 7", dates: "May 26–Jun 1", topics: "Review + GitHub deploy week", dsa: "BST: Validate, Kth Smallest, LCA", build: "GitHub deploy + README", apt: "GFG OA mock 60min" },
     ],
-    rules: ["1 video → close tab → code immediately. Non-negotiable.", "25-minute timer on every LC problem. No hints in first 25.", "Push to GitHub every single day.", "Sunday = re-solve 3 hardest problems from the week from memory."],
-    checkpoints: "65 LC problems + 1 deployed Java project on GitHub by June 1",
+    rules: [
+      "1 video → close tab → code immediately. Non-negotiable.",
+      "25-min timer on every LeetCode. No hints in first 25.",
+      "Push to GitHub every single day without exception.",
+      "Sunday = re-solve 3 hardest problems from scratch. No notes.",
+    ],
   },
   {
     id: 2,
+    icon: "⚡",
+    color: "#6bcb77",
+    glow: "rgba(107,203,119,0.4)",
+    duration: "Jun 2 – Jul 13 · 42 days · 4-5 hrs/day",
+    mission: "Spring Boot + React + DSA escalation. Build your first production-grade full-stack app.",
+    checkpoint: "110 LC · Spring Boot + React app deployed (Render + Vercel) · JWT auth working",
     weeks: [
-      { label: "Jun 2–8", topics: "Spring Boot intro — Initializr, first REST endpoint (Telusko)", lc: "70 total", build: "GET /hello endpoint running" },
-      { label: "Jun 9–15", topics: "Spring Boot CRUD + PostgreSQL + JPA", lc: "78 total", build: "Full CRUD API for one entity" },
-      { label: "Jun 16–22", topics: "JWT Authentication — spring-security, token filter", lc: "86 total", build: "Login + protected endpoint" },
-      { label: "Jun 23–29", topics: "React fundamentals — components, state, hooks", lc: "94 total", build: "React form connected to your API" },
-      { label: "Jun 30–Jul 6", topics: "React + Axios + CORS + Tailwind styling", lc: "102 total", build: "Working full-stack app" },
-      { label: "Jul 7–13", topics: "Deploy: Render.com (API) + Vercel (React) + Supabase (DB)", lc: "110 total", build: "LIVE deployed project with URL" },
-      { label: "Jul 14–20", topics: "System Design intro: Gaurav Sen — load balancers, caching", lc: "118 total", build: "System design notes + diagram" },
-      { label: "Jul 21–27", topics: "Polish + MongoDB intro as second data layer", lc: "130 total", build: "Project 2: deployed + README" },
+      { label: "Week 1", dates: "Jun 2–8", topics: "Spring Boot Initializr, first REST endpoint", dsa: "Heaps: Merge K Sorted, Top K Frequent", build: "GET /hello → 200 in Postman", apt: "Mixed quant 15q" },
+      { label: "Week 2", dates: "Jun 9–15", topics: "Spring Data JPA, @Entity, PostgreSQL CRUD", dsa: "Stack: NGE II, Stock Span, Histogram", build: "CRUD API: User entity", apt: "Logical 15q" },
+      { label: "Week 3", dates: "Jun 16–22", topics: "Spring Security + JWT auth filter", dsa: "BST: Recover, Serialize, Largest BST", build: "Login/signup → JWT token", apt: "Critical Reasoning 15q" },
+      { label: "Week 4", dates: "Jun 23–29", topics: "React: components, props, useState, useEffect", dsa: "Heaps: Kth Small, Median Stream", build: "React Todo with useState", apt: "GFG OA 30q" },
+      { label: "Week 5", dates: "Jun 30–Jul 6", topics: "Tailwind CSS + React-SpringBoot connection", dsa: "Backtracking: Subsets, Comb Sum, Perms", build: "React+Tailwind calls your API", apt: "Mixed 15q" },
+      { label: "Week 6", dates: "Jul 7–13", topics: "MongoDB + Spring Data Mongo, NoSQL CRUD", dsa: "Graphs: Islands, Clone Graph, Pacific", build: "DEPLOY: Render + Vercel live URLs", apt: "15q + mock GD topic" },
     ],
-    rules: ["College has started. 4-5 hrs weekdays, 7-8 Sunday.", "Spring Boot = enterprise architecture knowledge. Not optional.", "Every project gets a live URL before it goes on your resume.", "No new technologies until current ones are deployed."],
-    checkpoints: "130 LC + 1 fully deployed Spring Boot + React app with JWT auth",
+    rules: [
+      "4-5 hrs weekdays. 7-8 hrs Sunday. No negotiation.",
+      "Spring Boot = enterprise architecture. JPMC runs it in prod.",
+      "Every project needs a live URL before it goes on resume.",
+      "No new tech until current one is deployed and working.",
+    ],
   },
   {
     id: 3,
+    icon: "⚔️",
+    color: "#c77dff",
+    glow: "rgba(199,125,255,0.4)",
+    duration: "Jul 14 – Sep 7 · 56 days · 4-5 hrs/day",
+    mission: "Full Stack Project 2 + AI/ML + DP + Graphs. This is where 90% of candidates fall behind.",
+    checkpoint: "178 LC · 2 deployed projects (Spring Boot + ML) · Blind 75 ~80% done",
     weeks: [
-      { label: "Jul 28–Aug 3", topics: "DP intro: Climbing Stairs, House Robber, Fibonacci variants", lc: "140 total", build: "DP cheatsheet in your own words" },
-      { label: "Aug 4–10", topics: "DP: Coin Change, Knapsack, LCS, LIS", lc: "150 total", build: "Add Python + scikit-learn project" },
-      { label: "Aug 11–17", topics: "Graphs: DFS/BFS, Number of Islands, Clone Graph", lc: "158 total", build: "Graph visualizer (optional bonus)" },
-      { label: "Aug 18–24", topics: "Graphs: Topological sort, Dijkstra, Course Schedule", lc: "165 total", build: "System design: URL shortener write-up" },
-      { label: "Aug 25–31", topics: "Backtracking: Subsets, Permutations, N-Queens", lc: "172 total", build: "ML project: iris classifier deployed" },
-      { label: "Sep 1–7", topics: "Intervals + Greedy — classic patterns", lc: "178 total", build: "AMCAT mock #1" },
-      { label: "Sep 8–14", topics: "Blind 75 — fill gaps in weakest patterns", lc: "184 total", build: "Communication: record 2-min concept explanation" },
-      { label: "Sep 15–21", topics: "Hard problems + company-tagged review", lc: "190 total", build: "System design: Twitter feed 45-min answer" },
-      { label: "Sep 22–28", topics: "Full review week — re-solve 10 problems you struggled with", lc: "195 total", build: "Resume draft: all 3 projects with live URLs" },
+      { label: "Week 1", dates: "Jul 14–20", topics: "Python basics (Hitesh) + pandas, numpy", dsa: "DP: Climbing Stairs, House Robber, Min Cost", build: "Pandas CSV stats script", apt: "Data Interp 15q" },
+      { label: "Week 2", dates: "Jul 21–27", topics: "CampusX: scikit-learn, Logistic Regression", dsa: "DP: LCS, Coin Change, LIS", build: "Iris Classifier + confusion matrix", apt: "GFG OA 30q" },
+      { label: "Week 3", dates: "Jul 28–Aug 3", topics: "Decision Trees + Random Forest + cross-val", dsa: "Graphs: Course Schedule, Topological Sort", build: "Heart disease RF model + Flask API", apt: "Mixed 15q + puzzles" },
+      { label: "Week 4", dates: "Aug 4–10", topics: "Gaurav Sen: Hashing + Load Balancer + CAP", dsa: "Graphs: Prim's, Bellman Ford, Floyd", build: "System Design: URL Shortener 1-page doc", apt: "Mixed 20q timed" },
+      { label: "Week 5", dates: "Aug 11–17", topics: "Build Project 2: E-commerce or Expense API", dsa: "DP Hard: Wildcard, Palindrome Part", build: "Project 2 backend deployed", apt: "Weakest section 15q" },
+      { label: "Week 6", dates: "Aug 18–24", topics: "CampusX: K-Means + PCA + Flask deploy", dsa: "Greedy + Trie — all from Shradha", build: "ML: Flask + React deployed", apt: "GFG OA 30q" },
+      { label: "Week 7", dates: "Aug 25–31", topics: "Gaurav Sen: Pastebin + Rate Limiter design", dsa: "Graph: Dijkstra, Kruskal, Alien Dict", build: "Project 2 polish + README + live URL", apt: "Mixed 20q" },
+      { label: "Week 8", dates: "Sep 1–7", topics: "NeetCode: fill weakest categories from profile", dsa: "Remaining skipped Shradha problems", build: "System Design: Twitter Feed 1-page doc", apt: "AMCAT mock #1 — 90 min" },
     ],
-    rules: ["DP and Graphs are not optional — they appear in every FAANG OA.", "Python is resume breadth only. Don't go deep.", "Communication practice starts this phase. Record yourself.", "AMCAT mocks from Sep — treat them as real."],
-    checkpoints: "195 LC + Blind 75 ~90% done + Python ML project deployed",
+    rules: [
+      "Python = resume breadth only. Don't go too deep.",
+      "AI/ML = 1 deployed project minimum with live URL.",
+      "Communication practice starts here. Record yourself.",
+      "AMCAT mocks from Sep — treat as real exam day.",
+    ],
   },
   {
     id: 4,
+    icon: "🎯",
+    color: "#4d96ff",
+    glow: "rgba(77,150,255,0.4)",
+    duration: "Sep 8 – Nov 16 · 70 days · 4-5 hrs/day",
+    mission: "AWS + Mock Interviews + Apply aggressively. Everything built toward this phase.",
+    checkpoint: "230+ LC · 3 deployed projects · 30+ applications · 6+ mock interviews done",
     weeks: [
-      { label: "Sep 29–Oct 5", topics: "AWS EC2: deploy Spring Boot, configure env vars", lc: "200 total", build: "API live on EC2" },
-      { label: "Oct 6–12", topics: "AWS S3: file upload from Spring Boot, pre-signed URLs", lc: "203 total", build: "S3 integration in project" },
-      { label: "Oct 13–19", topics: "MongoDB: Spring Data MongoDB, NoSQL vs SQL comparison", lc: "206 total", build: "Project with both SQL and NoSQL endpoints" },
-      { label: "Oct 20–26", topics: "Company-tagged LC: JPMC + PayPal filter", lc: "210 total", build: "Resume finalized — sent to peers for review" },
-      { label: "Oct 27–Nov 2", topics: "Mock interviews: Pramp + peer — 2 mocks this week", lc: "213 total", build: "Apply to 10 companies" },
-      { label: "Nov 3–9", topics: "System design: Design Instagram/Twitter feed full answer", lc: "216 total", build: "Apply 10 more" },
-      { label: "Nov 10–16", topics: "HR prep: STAR method — 6 behavioural questions written", lc: "219 total", build: "LinkedIn profile updated" },
-      { label: "Nov 17–23", topics: "OA practice: company-specific question banks", lc: "222 total", build: "Apply 10 more + follow up on pending" },
-      { label: "Nov 24–Dec 7", topics: "Interview simulation weeks — treat every practice as real", lc: "228 total", build: "Cover letters for top 5 targets" },
-      { label: "Dec 8–14", topics: "Final polish — fix any deployed project bugs, update READMEs", lc: "230 total", build: "GitHub profile pinned with best 3 projects" },
+      { label: "Week 1", dates: "Sep 8–14", topics: "AWS EC2: create instance, deploy Spring Boot JAR", dsa: "DP Hard: MCM, Egg Drop, Bitonic", build: "API live on EC2 free tier", apt: "Mixed 20q" },
+      { label: "Week 2", dates: "Sep 15–21", topics: "AWS S3: upload from Spring Boot, pre-signed URLs", dsa: "DP: remaining + weak review", build: "File upload deployed in project", apt: "JPMC-style OA 60min" },
+      { label: "Week 3", dates: "Sep 22–28", topics: "Pramp mock interviews — first session booked", dsa: "Intervals: Merge, Non-Overlap, Meeting Rooms", build: "Resume: B/U/Y bullet format", apt: "Mixed 20q verbal heavy" },
+      { label: "Week 4", dates: "Oct 5–11", topics: "Gaurav Sen: Twitter + Uber + WhatsApp design", dsa: "Trie: implement + all 5 sheet problems", build: "All 3 bullets with live URLs on resume", apt: "AMCAT mock #2 — 90 min" },
+      { label: "Week 5", dates: "Oct 12–18", topics: "Apply Wave 1: JPMC, PayPal, Razorpay, Zepto", dsa: "Hard company-tagged LC — JPMC filter", build: "LinkedIn: 500+ connections push", apt: "Mixed 20q" },
+      { label: "Week 6", dates: "Oct 19–25", topics: "React advanced: Context, custom hooks, React Query", dsa: "NeetCode: 5 weakest patterns drilled", build: "Project 3: Full Stack + ML integrated", apt: "GFG OA 30q" },
+      { label: "Week 7", dates: "Oct 26–Nov 1", topics: "Pramp: 2 mock sessions this week", dsa: "LC Hard daily — company tagged", build: "SD verbal: URL + Twitter — 45 min each", apt: "IndiaBix 20q" },
+      { label: "Week 8", dates: "Nov 2–9", topics: "Portfolio polish + GitHub cleanup + README audit", dsa: "LC Hard daily", build: "All 3 projects: live URLs confirmed", apt: "AMCAT mock #3 final" },
+      { label: "Week 9", dates: "Nov 10–16", topics: "Pramp final session + HR finalization", dsa: "Review weakest 5 LC patterns", build: "Apply 10 more — 30+ total", apt: "IndiaBix 20q verbal" },
     ],
-    rules: ["AWS is on resume only if it's actually deployed. No fake bullets.", "Pramp mock interviews are non-negotiable — you need reps.", "Apply consistently. 3-5 companies per week minimum.", "JPMC and PayPal run Java-heavy assessments. Stay sharp."],
-    checkpoints: "230+ LC + 3 deployed projects + 30+ applications sent",
+    rules: [
+      "AWS on resume ONLY if deployed and working. No fake bullets.",
+      "Pramp mock interviews are non-negotiable. You need reps.",
+      "Apply 3-5 companies per week minimum. Consistent, not bursty.",
+      "JPMC runs Java-heavy OA. Spring Boot = your competitive edge.",
+    ],
   },
   {
     id: 5,
+    icon: "🚀",
+    color: "#ffd93d",
+    glow: "rgba(255,217,61,0.4)",
+    duration: "Nov 17 – Dec 31 · 45 days · 4-5 hrs/day",
+    mission: "Lock everything. 3 deployed projects. Resume finalized. January is interviews only.",
+    checkpoint: "Resume final · 3 live URLs · 50+ applications sent · January plan ready",
     weeks: [
-      { label: "Dec 15–21", topics: "Portfolio audit: every project live, every README complete", lc: "233 total", build: "3 live URLs on resume" },
-      { label: "Dec 22–31", topics: "Resume lock + January preparation — no new tech", lc: "235 total", build: "January interview plan ready" },
+      { label: "Week 1", dates: "Nov 17–23", topics: "Portfolio audit: all projects live + README done", dsa: "LC Medium/day — keep engine warm", build: "3 live URLs on resume confirmed", apt: "5 companies applied + followups" },
+      { label: "Week 2", dates: "Nov 24–30", topics: "Resume lock + peer review from CS friend", dsa: "LC Medium/day", build: "GitHub: 3 best projects pinned", apt: "50+ total apps by Dec 14" },
+      { label: "Week 3", dates: "Dec 1–14", topics: "No new technology. Sharpen only.", dsa: "LC Hard x2/day", build: "January plan doc: companies + interview dates", apt: "Applications ongoing" },
+      { label: "Week 4", dates: "Dec 15–31", topics: "Final week. You're ready. Sleep 8 hours.", dsa: "5 weakest — nail them", build: "January interview plan locked", apt: "Rest. Prepare mentally." },
     ],
-    rules: ["No new technology in Phase 5. Lock what you have.", "If a project doesn't have a live URL, remove it from resume.", "January = internship prep ONLY. This month closes the door on building."],
-    checkpoints: "Resume final · 3 live URLs · January plan ready · Applications ongoing",
+    rules: [
+      "No new technology in Phase 5. Zero.",
+      "If a project has no live URL, remove it from resume.",
+      "January = interviews only. Building phase is closed.",
+      "50+ applications minimum before December ends.",
+    ],
   },
   {
     id: 6,
+    icon: "💎",
+    color: "#ff6b9d",
+    glow: "rgba(255,107,157,0.4)",
+    duration: "Jan 2027 · 31 days · Full day",
+    mission: "Drill only. No new topics. Trust the 8 months you built. This is what it all was for.",
+    checkpoint: "JPMC / PayPal / Top MNC internship offer. That's the only metric.",
     weeks: [
-      { label: "Jan Week 1", topics: "2 Hard LC/day + system design 45-min daily drill", lc: "250 total", build: "Pramp daily" },
-      { label: "Jan Week 2", topics: "Company-specific OA practice — JPMC pattern bank", lc: "255 total", build: "HR round prep: 10 STAR stories" },
-      { label: "Jan Week 3", topics: "Full mock rounds: technical + HR + system design back to back", lc: "260 total", build: "Simulate entire interview day" },
-      { label: "Jan Week 4", topics: "Sharpen weak spots only — do not start new topics", lc: "265 total", build: "You're ready. Trust the 8 months." },
+      { label: "Week 1", dates: "Jan 1–7", topics: "2 Hard LC/day + System Design 45min verbal", dsa: "JPMC/PayPal tagged — arrays, strings, greedy", build: "Pramp daily", apt: "Company OA patterns" },
+      { label: "Week 2", dates: "Jan 8–14", topics: "JPMC/PayPal OA pattern bank", dsa: "Hard daily — no cherry picking", build: "Pramp every 2 days", apt: "Full mock day simulation" },
+      { label: "Week 3", dates: "Jan 15–21", topics: "Full simulation: technical + SD + HR back to back", dsa: "Hard daily", build: "3 full mock rounds this week", apt: "OA simulation" },
+      { label: "Week 4", dates: "Jan 22–31", topics: "Sharpen weakest 5 only. Trust the process.", dsa: "5 weakest patterns — nail them", build: "Final Pramp session", apt: "You're ready." },
     ],
-    rules: ["This phase is drill, not learn. Everything new you try to learn now will hurt you.", "Mock interviews every 2 days minimum.", "Sleep 8 hours. Your brain needs it to solve Hard DP under pressure.", "Trust the 8 months. You built this."],
-    checkpoints: "JPMC/PayPal/MNC internship offer. That's the only checkpoint that matters.",
+    rules: [
+      "This phase is DRILL not LEARN. New topics will hurt you.",
+      "Mock interviews every 2 days minimum.",
+      "Sleep 8 hours. DP under pressure needs a rested brain.",
+      "Trust the 8 months. You built this from nothing.",
+    ],
   },
 ]
 
-export default function PhasesView({ onSelectDate }) {
+function PhaseNode({ phase, detail, index, isActive, onClick, totalPhases }) {
+  const nodeRef = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), index * 120)
+    return () => clearTimeout(timer)
+  }, [index])
+
+  const isLeft = index % 2 === 0
+
   return (
-    <div style={{ position: 'relative', zIndex: 1 }}>
-      <h2 style={{ fontFamily: 'Syne', fontSize: 24, color: '#fff', margin: '0 0 6px', fontWeight: 800 }}>
-        🗺️ The Full Battle Plan
-      </h2>
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 28px' }}>
-        6 phases · 8 months · one goal. Click any phase to explore.
-      </p>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {PHASE_DETAILS.map((pd, i) => {
-          const phase = PHASES[i]
-          return (
-            <details key={pd.id} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${phase.color}25`, borderRadius: 14, overflow: 'hidden' }}>
-              <summary style={{ padding: '18px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, listStyle: 'none', userSelect: 'none' }}>
-                <span style={{ fontSize: 28 }}>{phase.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: 'Syne', fontSize: 16, color: phase.color, fontWeight: 700 }}>Phase {phase.id}: {phase.name}</span>
-                    <span style={{ fontSize: 11, fontFamily: 'JetBrains Mono', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 10 }}>{phase.dates}</span>
-                  </div>
-                  <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>{phase.tag}</p>
-                </div>
-                <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.2)' }}>▾</span>
-              </summary>
-
-              <div style={{ padding: '0 20px 20px', borderTop: `1px solid ${phase.color}20` }}>
-                {/* Checkpoint */}
-                <div style={{ background: `${phase.color}10`, border: `1px solid ${phase.color}25`, borderRadius: 8, padding: '10px 14px', margin: '16px 0 14px', fontSize: 13, color: phase.color }}>
-                  🎯 Phase goal: {pd.checkpoints}
-                </div>
-
-                {/* Rules */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontFamily: 'JetBrains Mono', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>NON-NEGOTIABLE RULES</div>
-                  {pd.rules.map((r, ri) => (
-                    <div key={ri} style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 13, color: 'rgba(255,255,255,0.65)', alignItems: 'flex-start' }}>
-                      <span style={{ color: phase.color, flexShrink: 0 }}>→</span> {r}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Week table */}
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr>
-                        {['Week', 'Focus', 'LC target', 'Build'].map(h => (
-                          <th key={h} style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', fontSize: 10, padding: '6px 8px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontWeight: 400 }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pd.weeks.map((w, wi) => (
-                        <tr key={wi}>
-                          <td style={{ padding: '8px', color: 'rgba(255,255,255,0.35)', fontSize: 11, fontFamily: 'JetBrains Mono', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'top' }}>{w.label}</td>
-                          <td style={{ padding: '8px', color: 'rgba(255,255,255,0.7)', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'top', lineHeight: 1.5 }}>{w.topics}</td>
-                          <td style={{ padding: '8px', color: phase.color, fontFamily: 'JetBrains Mono', fontSize: 11, borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{w.lc}</td>
-                          <td style={{ padding: '8px', color: 'rgba(255,255,255,0.55)', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'top', fontSize: 12 }}>{w.build}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-                  <a href={NEETCODE_ROADMAP} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: 11, background: 'rgba(255,107,26,0.1)', border: '1px solid rgba(255,107,26,0.25)', color: '#ff6b1a', padding: '5px 12px', borderRadius: 20, textDecoration: 'none' }}>
-                    ⚡ NeetCode Roadmap
-                  </a>
-                  <a href={DSA_SHEET} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: 11, background: 'rgba(255,211,61,0.1)', border: '1px solid rgba(255,211,61,0.25)', color: '#ffd93d', padding: '5px 12px', borderRadius: 20, textDecoration: 'none' }}>
-                    📋 Striver Sheet
-                  </a>
-                </div>
+    <div
+      ref={nodeRef}
+      style={{
+        display: 'flex',
+        flexDirection: isLeft ? 'row' : 'row-reverse',
+        alignItems: 'flex-start',
+        gap: 0,
+        marginBottom: 0,
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(30px)',
+        transition: 'all 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+      }}
+    >
+      {/* Content card */}
+      <div style={{ flex: 1, padding: isLeft ? '0 24px 0 0' : '0 0 0 24px' }}>
+        <div
+          onClick={onClick}
+          style={{
+            background: isActive
+              ? `linear-gradient(135deg, ${phase.color}18, ${phase.color}08)`
+              : 'rgba(255,255,255,0.02)',
+            border: `1px solid ${isActive ? phase.color + '50' : 'rgba(255,255,255,0.06)'}`,
+            borderRadius: 16,
+            padding: '18px 20px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: isActive ? `0 0 30px ${phase.color}20` : 'none',
+          }}
+          onMouseEnter={e => {
+            if (!isActive) {
+              e.currentTarget.style.background = `${phase.color}10`
+              e.currentTarget.style.borderColor = `${phase.color}30`
+            }
+          }}
+          onMouseLeave={e => {
+            if (!isActive) {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+            }
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 20 }}>{phase.icon}</span>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 10, fontFamily: 'JetBrains Mono', color: phase.color,
+                  background: `${phase.color}18`, padding: '2px 8px', borderRadius: 10, letterSpacing: 1,
+                }}>PHASE {phase.id}</span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'JetBrains Mono' }}>
+                  {detail.weeks.length} weeks
+                </span>
               </div>
-            </details>
+              <div style={{ fontFamily: 'Syne', fontSize: 15, color: '#fff', fontWeight: 700, marginTop: 2 }}>
+                {phase.name}
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'JetBrains Mono', marginBottom: 6 }}>
+            {detail.duration}
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+            {detail.mission}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+            <span style={{ fontSize: 10, color: phase.color, fontFamily: 'JetBrains Mono' }}>
+              {isActive ? '▼ collapse' : '▶ expand weeks'}
+            </span>
+          </div>
+        </div>
+
+        {/* Expanded weeks */}
+        {isActive && (
+          <div style={{
+            marginTop: 12,
+            animation: 'slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+          }}>
+            {/* Checkpoint */}
+            <div style={{
+              background: `${phase.color}10`,
+              border: `1px solid ${phase.color}30`,
+              borderRadius: 10, padding: '10px 14px', marginBottom: 12,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ fontSize: 14 }}>🏆</span>
+              <div>
+                <div style={{ fontSize: 9, color: phase.color, fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 2 }}>PHASE CHECKPOINT</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{detail.checkpoint}</div>
+              </div>
+            </div>
+
+            {/* Weeks */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+              {detail.weeks.map((week, wi) => (
+                <div key={wi} style={{
+                  background: 'rgba(255,255,255,0.025)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 10, padding: '12px 14px',
+                  borderLeft: `3px solid ${phase.color}60`,
+                  animation: `slideDown 0.3s ${wi * 0.05}s both`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'Syne', fontSize: 13, color: phase.color, fontWeight: 700 }}>{week.label}</span>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'JetBrains Mono' }}>{week.dates}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    {[
+                      { icon: '📺', label: 'LEARN', val: week.topics, color: '#4d96ff' },
+                      { icon: '⚡', label: 'DSA', val: week.dsa, color: '#ff6b1a' },
+                      { icon: '🔨', label: 'BUILD', val: week.build, color: '#c77dff' },
+                      { icon: '🧮', label: 'APTITUDE', val: week.apt, color: '#6bcb77' },
+                    ].map(item => (
+                      <div key={item.label} style={{
+                        background: `${item.color}08`,
+                        border: `1px solid ${item.color}18`,
+                        borderRadius: 8, padding: '8px 10px',
+                      }}>
+                        <div style={{ fontSize: 9, color: item.color, fontFamily: 'JetBrains Mono', letterSpacing: 0.5, marginBottom: 4 }}>
+                          {item.icon} {item.label}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>{item.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Rules */}
+            <div style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 10, padding: '12px 14px',
+            }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 8 }}>
+                ⚔️ PHASE RULES — NON-NEGOTIABLE
+              </div>
+              {detail.rules.map((rule, ri) => (
+                <div key={ri} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: ri < detail.rules.length - 1 ? 6 : 0 }}>
+                  <span style={{ color: phase.color, fontSize: 12, marginTop: 1, flexShrink: 0 }}>→</span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{rule}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Center spine + node */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 60 }}>
+        {/* Top connector */}
+        {index > 0 && (
+          <div style={{
+            width: 2,
+            height: 24,
+            background: `linear-gradient(to bottom, ${PHASES[index-1].color}60, ${phase.color}60)`,
+          }} />
+        )}
+        {index === 0 && <div style={{ height: 24 }} />}
+
+        {/* Node circle */}
+        <div
+          onClick={onClick}
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: isActive
+              ? `radial-gradient(circle, ${phase.color}40, ${phase.color}10)`
+              : 'rgba(255,255,255,0.04)',
+            border: `2px solid ${isActive ? phase.color : phase.color + '50'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, cursor: 'pointer', flexShrink: 0,
+            boxShadow: isActive ? `0 0 20px ${phase.color}60, 0 0 40px ${phase.color}30` : 'none',
+            transition: 'all 0.3s ease',
+            animation: isActive ? 'pulse-node 2s ease-in-out infinite' : 'none',
+          }}
+        >
+          {phase.icon}
+        </div>
+
+        {/* Bottom connector */}
+        {index < totalPhases - 1 && (
+          <div style={{
+            width: 2,
+            flex: 1,
+            minHeight: 40,
+            background: `linear-gradient(to bottom, ${phase.color}60, ${PHASES[index+1]?.color}30)`,
+          }} />
+        )}
+      </div>
+
+      {/* Spacer for opposite side */}
+      <div style={{ flex: 1 }} />
+    </div>
+  )
+}
+
+export default function PhasesView() {
+  const [activePhase, setActivePhase] = useState(null)
+  const [headerVisible, setHeaderVisible] = useState(false)
+
+  useEffect(() => {
+    setTimeout(() => setHeaderVisible(true), 100)
+  }, [])
+
+  const togglePhase = (id) => {
+    setActivePhase(prev => prev === id ? null : id)
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <style>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-node {
+          0%, 100% { box-shadow: 0 0 20px var(--nc, #f97316), 0 0 40px var(--nc, #f97316); }
+          50% { box-shadow: 0 0 30px var(--nc, #f97316), 0 0 60px var(--nc, #f97316); }
+        }
+        @keyframes float-badge {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{
+        marginBottom: 32,
+        opacity: headerVisible ? 1 : 0,
+        transform: headerVisible ? 'translateY(0)' : 'translateY(-20px)',
+        transition: 'all 0.6s ease',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <div style={{
+            fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 2,
+            color: '#ff6b1a', background: 'rgba(255,107,26,0.1)',
+            border: '1px solid rgba(255,107,26,0.25)', padding: '4px 12px', borderRadius: 20,
+            animation: 'float-badge 3s ease-in-out infinite',
+          }}>
+            BATTLE MAP · 8 MONTHS · JPMC READY
+          </div>
+        </div>
+        <h2 style={{
+          fontFamily: 'Syne', fontSize: 'clamp(22px,4vw,34px)', fontWeight: 800,
+          color: '#fff', margin: '0 0 8px', lineHeight: 1.1,
+        }}>
+          Your Complete Battle Plan
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, margin: 0, fontFamily: 'JetBrains Mono' }}>
+          Click any phase to expand week-by-week targets · Apr 2026 → Jan 2027
+        </p>
+
+        {/* Phase overview pills */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
+          {PHASES.map(p => (
+            <button key={p.id} onClick={() => togglePhase(p.id)} style={{
+              fontSize: 11, fontFamily: 'JetBrains Mono',
+              background: activePhase === p.id ? `${p.color}20` : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${activePhase === p.id ? p.color + '50' : 'rgba(255,255,255,0.08)'}`,
+              color: activePhase === p.id ? p.color : 'rgba(255,255,255,0.4)',
+              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activePhase === p.id ? `0 0 12px ${p.color}30` : 'none',
+            }}>
+              {p.icon} P{p.id} · {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Timeline map */}
+      <div style={{ position: 'relative', paddingBottom: 40 }}>
+        {PHASES.map((phase, index) => {
+          const detail = PHASE_DETAILS.find(d => d.id === phase.id)
+          return (
+            <PhaseNode
+              key={phase.id}
+              phase={phase}
+              detail={detail}
+              index={index}
+              isActive={activePhase === phase.id}
+              onClick={() => togglePhase(phase.id)}
+              totalPhases={PHASES.length}
+            />
           )
         })}
+
+        {/* End node */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff6b1a, #ffd93d, #ff6b9d)',
+            borderRadius: 12, padding: '12px 28px',
+            fontFamily: 'Syne', fontSize: 15, fontWeight: 800, color: '#000',
+            boxShadow: '0 0 30px rgba(255,107,26,0.4)',
+          }}>
+            🏆 JPMC / PayPal Offer
+          </div>
+        </div>
       </div>
     </div>
   )
