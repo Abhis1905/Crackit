@@ -10,7 +10,7 @@ import { getAllProgress } from './lib/supabase'
 const TABS = [
   { id: 'today',    label: "Today's Mission", icon: '🎯' },
   { id: 'calendar', label: 'Calendar',         icon: '📅' },
-  { id: 'phases',   label: 'All Phases',       icon: '🗺️' },
+  { id: 'phases',   label: 'Battle Plan',      icon: '🗺️' },
   { id: 'progress', label: 'Progress',         icon: '📊' },
 ]
 
@@ -36,106 +36,133 @@ export default function App() {
     })
   }, [])
 
-  function handleCalendarSelect(date) {
-    setSelectedDate(date)
-    setTab('today')
-  }
-
+  function handleCalendarSelect(date) { setSelectedDate(date); setTab('today') }
   const isViewingToday = selectedDate === todayStr
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', position: 'relative', overflow: 'hidden' }}>
-      <ThreeBackground />
+  // Current phase detection
+  const currentPhase = PHASES.find(p => {
+    if (p.id === 1) return todayStr >= '2026-04-14' && todayStr <= '2026-06-01'
+    if (p.id === 2) return todayStr >= '2026-06-02' && todayStr <= '2026-07-13'
+    if (p.id === 3) return todayStr >= '2026-07-14' && todayStr <= '2026-09-07'
+    if (p.id === 4) return todayStr >= '2026-09-08' && todayStr <= '2026-11-16'
+    if (p.id === 5) return todayStr >= '2026-11-17' && todayStr <= '2026-12-31'
+    if (p.id === 6) return todayStr >= '2027-01-01'
+    return false
+  })
 
-      {/* Orbs */}
+  const progressPct = isInProgram ? Math.round((dayNum / totalDays) * 100) : 0
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#06060e', position: 'relative', overflow: 'hidden' }}>
+      <ThreeBackground />
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
-
-      {/* Main content */}
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 900, margin: '0 auto', padding: '0 16px 80px' }}>
-
-        {/* Header */}
-        <header style={{ padding: '24px 0 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 920, margin: '0 auto', padding: '0 16px 100px' }}>
+        {/* ─── HEADER ───────────────────────────────────────── */}
+        <header style={{ padding: '28px 0 22px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 26 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
             <div>
-              <h1 className="shimmer-text" style={{ fontFamily: 'Syne', fontSize: 'clamp(24px, 5vw, 40px)', fontWeight: 800, margin: '0 0 4px', lineHeight: 1.1 }}>
-                ☀️ Summer Break Crack
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                {currentPhase && (
+                  <span style={{
+                    fontSize: 10, fontFamily: 'JetBrains Mono', letterSpacing: 1,
+                    background: currentPhase.color + '20', border: `1px solid ${currentPhase.color}40`,
+                    color: currentPhase.color, padding: '3px 10px', borderRadius: 20,
+                  }}>
+                    PHASE {currentPhase.id} ACTIVE
+                  </span>
+                )}
+              </div>
+              <h1 className="shimmer-text" style={{
+                fontFamily: 'Syne', fontSize: 'clamp(26px,5vw,42px)', fontWeight: 800,
+                margin: '0 0 5px', lineHeight: 1.1, letterSpacing: '-0.5px',
+              }}>
+                CrackIT — JPMC Ready
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0, fontFamily: 'JetBrains Mono' }}>
-                {isInProgram ? `Day ${dayNum} of ${totalDays}` : formatDate(todayStr)} · JPMC/PayPal ready by Dec 2026
+              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, margin: 0, fontFamily: 'JetBrains Mono', letterSpacing: 0.3 }}>
+                {isInProgram ? `Day ${dayNum} of ${totalDays} · ${progressPct}% complete` : formatDate(todayStr)} · Target: JPMC / PayPal / Top MNC
               </p>
             </div>
+            {/* Stats */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <div style={{ background: 'rgba(255,107,26,0.1)', border: '1px solid rgba(255,107,26,0.25)', borderRadius: 10, padding: '8px 14px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Syne', fontSize: 20, color: '#ff6b1a', fontWeight: 800 }}>{stats.streak}🔥</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono' }}>STREAK</div>
-              </div>
-              <div style={{ background: 'rgba(199,125,255,0.1)', border: '1px solid rgba(199,125,255,0.25)', borderRadius: 10, padding: '8px 14px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Syne', fontSize: 20, color: '#c77dff', fontWeight: 800 }}>{stats.totalDone}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono' }}>DAYS ACTIVE</div>
-              </div>
+              {[
+                { val: `${stats.streak}🔥`, label: 'STREAK', color: '#ff6b1a', bg: 'rgba(255,107,26,0.1)', border: 'rgba(255,107,26,0.22)' },
+                { val: stats.totalDone, label: 'DAYS DONE', color: '#c77dff', bg: 'rgba(199,125,255,0.1)', border: 'rgba(199,125,255,0.22)' },
+                { val: `${progressPct}%`, label: 'PROGRESS', color: '#6bcb77', bg: 'rgba(107,203,119,0.1)', border: 'rgba(107,203,119,0.22)' },
+              ].map(s => (
+                <div key={s.label} style={{
+                  background: s.bg, border: `1px solid ${s.border}`, borderRadius: 12,
+                  padding: '10px 16px', textAlign: 'center', minWidth: 70,
+                }}>
+                  <div style={{ fontFamily: 'Syne', fontSize: 22, color: s.color, fontWeight: 800, lineHeight: 1 }}>{s.val}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', marginTop: 3, letterSpacing: 0.5 }}>{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Phase pills */}
-          <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
-            {PHASES.map(p => (
-              <span key={p.id} style={{ fontSize: 10, fontFamily: 'JetBrains Mono', background: `${p.color}12`, border: `1px solid ${p.color}30`, color: p.color, padding: '3px 10px', borderRadius: 20 }}>
-                P{p.id} {p.icon}
-              </span>
-            ))}
-          </div>
+          {/* Overall progress bar */}
+          {isInProgram && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>
+                <div className="prog-bar-fill" style={{
+                  height: '100%', width: `${progressPct}%`,
+                  background: 'linear-gradient(90deg, #ff6b1a, #ffd93d, #ff6b9d)',
+                  borderRadius: 4, boxShadow: '0 0 10px rgba(255,107,26,0.5)',
+                }} />
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                {PHASES.map(p => (
+                  <span key={p.id} style={{
+                    fontSize: 10, fontFamily: 'JetBrains Mono',
+                    background: `${p.color}${currentPhase?.id === p.id ? '22' : '0e'}`,
+                    border: `1px solid ${p.color}${currentPhase?.id === p.id ? '50' : '25'}`,
+                    color: currentPhase?.id === p.id ? p.color : p.color + '88',
+                    padding: '3px 9px', borderRadius: 18,
+                    boxShadow: currentPhase?.id === p.id ? `0 0 10px ${p.color}33` : 'none',
+                  }}>
+                    {p.icon} P{p.id}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </header>
 
-        {/* Viewing a past/future date banner */}
+        {/* Date banner */}
         {!isViewingToday && tab === 'today' && (
-          <div style={{ background: 'rgba(255,211,61,0.08)', border: '1px solid rgba(255,211,61,0.2)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, color: '#ffd93d' }}>
-              📅 Viewing: {formatDate(selectedDate)}
-            </span>
+          <div className="float-anim" style={{
+            background: 'rgba(255,211,61,0.07)', border: '1px solid rgba(255,211,61,0.2)',
+            borderRadius: 10, padding: '10px 16px', marginBottom: 16,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 13, color: '#ffd93d' }}>📅 Viewing: {formatDate(selectedDate)}</span>
             <button onClick={() => setSelectedDate(todayStr)}
-              style={{ fontSize: 11, background: 'rgba(255,107,26,0.15)', border: '1px solid rgba(255,107,26,0.3)', color: '#ff6b1a', padding: '4px 12px', borderRadius: 20, cursor: 'pointer', fontFamily: 'JetBrains Mono' }}>
-              → Go to today
+              style={{ fontSize: 11, background: 'rgba(255,107,26,0.15)', border: '1px solid rgba(255,107,26,0.3)', color: '#ff6b1a', padding: '4px 14px', borderRadius: 20, cursor: 'pointer', fontFamily: 'JetBrains Mono' }}>
+              → Today
             </button>
           </div>
         )}
 
-        {/* Tab nav */}
-        <nav style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 4 }}>
+        {/* ─── NAV TABS ──────────────────────────────────────── */}
+        <nav style={{ display: 'flex', gap: 4, marginBottom: 26, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 5 }}>
           {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              style={{
-                flex: 1,
-                padding: '8px 4px',
-                border: `1px solid ${tab === t.id ? 'rgba(255,107,26,0.4)' : 'transparent'}`,
-                background: tab === t.id ? 'rgba(255,107,26,0.1)' : 'transparent',
-                color: tab === t.id ? '#ff6b1a' : 'rgba(255,255,255,0.4)',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontFamily: 'Syne',
-                fontSize: 'clamp(10px, 1.5vw, 13px)',
-                fontWeight: tab === t.id ? 700 : 400,
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4,
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{t.icon}</span>
-              <span style={{ display: window.innerWidth < 400 ? 'none' : 'inline' }}>{t.label}</span>
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`nav-tab ${tab === t.id ? 'active' : ''}`}
+              style={{ color: tab === t.id ? '#ff6b1a' : 'rgba(255,255,255,0.38)' }}>
+              <span style={{ fontSize: 15 }}>{t.icon}</span>
+              <span style={{ display: 'var(--tab-label-display, inline)' }}>{t.label}</span>
             </button>
           ))}
         </nav>
 
-        {/* Tab content */}
-        {tab === 'today'    && <DailyView dateStr={selectedDate} />}
-        {tab === 'calendar' && <CalendarView onSelectDate={handleCalendarSelect} />}
-        {tab === 'phases'   && <PhasesView />}
-        {tab === 'progress' && <ProgressDashboard />}
+        {/* ─── CONTENT ───────────────────────────────────────── */}
+        <div className="float-anim" key={tab}>
+          {tab === 'today'    && <DailyView dateStr={selectedDate} />}
+          {tab === 'calendar' && <CalendarView onSelectDate={handleCalendarSelect} />}
+          {tab === 'phases'   && <PhasesView />}
+          {tab === 'progress' && <ProgressDashboard />}
+        </div>
       </div>
     </div>
   )

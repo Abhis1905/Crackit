@@ -2,114 +2,112 @@ import { useState, useEffect } from 'react'
 import { getAllProgress, getLeetcodeLog, logLeetcode } from '../lib/supabase'
 import { getTotalDays, getTodayIST, PHASES } from '../data/schedule'
 
-function StatCard({ label, value, sub, color }) {
+function StatCard({ label, value, sub, color, glow }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '16px 20px' }}>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'JetBrains Mono', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Syne', color: color || '#fff', lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>{sub}</div>}
+    <div style={{
+      background:'rgba(255,255,255,0.03)', border:`1px solid ${color}22`, borderRadius:14, padding:'18px 22px',
+      boxShadow: glow ? `0 0 20px ${color}18` : 'none', transition:'all 0.3s',
+    }}>
+      <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', marginBottom:7, letterSpacing:0.5 }}>{label}</div>
+      <div style={{ fontSize:30, fontWeight:800, fontFamily:'Syne', color: color || '#fff', lineHeight:1 }}>{value}</div>
+      {sub && <div style={{ fontSize:12, color:'rgba(255,255,255,0.32)', marginTop:5 }}>{sub}</div>}
     </div>
   )
 }
+
+const PATTERNS = ['Array','Two Pointers','Sliding Window','HashMap','Binary Search','Stack','Queue','Linked List','Trees','BST','Heaps','Graph','BFS','DFS','DP','Greedy','Trie','Backtracking','Intervals','Math']
+const DIFFICULTIES = ['Easy','Medium','Hard']
 
 export default function ProgressDashboard() {
   const [progress, setProgress] = useState([])
   const [lcLog, setLcLog] = useState([])
   const [showLcForm, setShowLcForm] = useState(false)
-  const [lcForm, setLcForm] = useState({ problem: '', difficulty: 'Medium', pattern: 'Array', timeTaken: 25, approach: '' })
+  const [lcForm, setLcForm] = useState({ problem:'', difficulty:'Medium', pattern:'Array', timeTaken:25, approach:'' })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     getAllProgress().then(setProgress)
     getLeetcodeLog().then(setLcLog)
   }, [])
 
-  const completedDays = progress.filter(p => {
-    const checks = p.checks || {}
-    return Object.values(checks).some(Boolean)
-  }).length
-
-  const fullyCompletedDays = progress.filter(p => {
-    const checks = p.checks || {}
-    const vals = Object.values(checks)
-    return vals.length > 0 && vals.every(Boolean)
-  }).length
-
-  // Streak calculation
+  const completedDays = progress.filter(p => Object.values(p.checks||{}).some(Boolean)).length
+  const fullyDone = progress.filter(p => { const v=Object.values(p.checks||{}); return v.length>0&&v.every(Boolean) }).length
+  
   let streak = 0
-  const today = getTodayIST()
-  const sortedProgress = [...progress].sort((a, b) => b.date.localeCompare(a.date))
-  for (const p of sortedProgress) {
-    const checks = p.checks || {}
-    if (Object.values(checks).some(Boolean)) streak++
-    else break
-  }
+  const sorted = [...progress].sort((a,b)=>b.date.localeCompare(a.date))
+  for (const p of sorted) { if(Object.values(p.checks||{}).some(Boolean))streak++; else break }
 
   const totalDays = getTotalDays()
-  const overallPct = Math.round((completedDays / totalDays) * 100)
+  const pct = Math.round((completedDays/totalDays)*100)
+  
+  const patterns = lcLog.reduce((acc,p)=>{acc[p.pattern]=(acc[p.pattern]||0)+1;return acc},{})
+  const sortedPat = Object.entries(patterns).sort((a,b)=>b[1]-a[1]).slice(0,8)
+  
+  const diffCounts = {Easy:0,Medium:0,Hard:0}
+  lcLog.forEach(p=>{if(diffCounts[p.difficulty]!==undefined)diffCounts[p.difficulty]++})
 
-  const patterns = lcLog.reduce((acc, p) => { acc[p.pattern] = (acc[p.pattern] || 0) + 1; return acc }, {})
-  const sortedPatterns = Object.entries(patterns).sort((a, b) => b[1] - a[1])
-
-  const diffCounts = { Easy: 0, Medium: 0, Hard: 0 }
-  lcLog.forEach(p => { if (diffCounts[p.difficulty] !== undefined) diffCounts[p.difficulty]++ })
-
-  const handleLcSubmit = async () => {
+  const handleSubmit = async () => {
+    if(!lcForm.problem.trim()) return
+    setSubmitting(true)
     await logLeetcode(lcForm.problem, lcForm.difficulty, lcForm.pattern, lcForm.timeTaken, lcForm.approach)
     setLcLog(await getLeetcodeLog())
     setShowLcForm(false)
-    setLcForm({ problem: '', difficulty: 'Medium', pattern: 'Array', timeTaken: 25, approach: '' })
+    setLcForm({problem:'',difficulty:'Medium',pattern:'Array',timeTaken:25,approach:''})
+    setSubmitting(false)
   }
 
-  const PATTERNS = ['Array','Two Pointer','Sliding Window','HashMap','Stack','Queue','Linked List','Binary Tree','Graph','DP','Backtracking','Greedy','Binary Search','Heap']
-  const DIFFICULTIES = ['Easy','Medium','Hard']
+  const totalLC = lcLog.length
+  const hardPct = totalLC > 0 ? Math.round(diffCounts.Hard/totalLC*100) : 0
+
+  const phaseData = PHASES.map((p,i) => {
+    const pDays = [48,42,56,70,45,31][i]
+    const done = Math.min(progress.filter(pr => {
+      const pd = ['2026-04-14','2026-06-02','2026-07-14','2026-09-08','2026-11-17','2027-01-01'][i]
+      const pe = ['2026-06-01','2026-07-13','2026-09-07','2026-11-16','2026-12-31','2027-01-31'][i]
+      return pr.date >= pd && pr.date <= pe && Object.values(pr.checks||{}).some(Boolean)
+    }).length, pDays)
+    return { ...p, total:pDays, done }
+  })
 
   return (
-    <div style={{ position: 'relative', zIndex: 1 }}>
-      <h2 style={{ fontFamily: 'Syne', fontSize: 24, color: '#fff', margin: '0 0 24px', fontWeight: 800 }}>
-        📊 Your Progress
-      </h2>
+    <div style={{ position:'relative', zIndex:1 }}>
+      <h2 style={{ fontFamily:'Syne', fontSize:24, color:'#fff', margin:'0 0 4px', fontWeight:800 }}>📊 Progress Dashboard</h2>
+      <p style={{ color:'rgba(255,255,255,0.38)', fontSize:13, margin:'0 0 24px' }}>Your battle stats. Honest numbers only.</p>
 
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 28 }}>
-        <StatCard label="DAYS ACTIVE" value={completedDays} sub={`/ ${totalDays} total`} color="#ff6b1a" />
-        <StatCard label="FULLY CRUSHED" value={fullyCompletedDays} sub="all tasks done" color="#ffd93d" />
-        <StatCard label="CURRENT STREAK" value={`${streak}🔥`} sub="consecutive days" color="#ff6b1a" />
-        <StatCard label="LC SOLVED" value={lcLog.length} sub={`E:${diffCounts.Easy} M:${diffCounts.Medium} H:${diffCounts.Hard}`} color="#c77dff" />
-        <StatCard label="OVERALL" value={`${overallPct}%`} sub="of 8-month plan" color="#6bcb77" />
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:28 }}>
+        <StatCard label="STREAK" value={`${streak}🔥`} sub="consecutive days" color="#ff6b1a" glow />
+        <StatCard label="DAYS ACTIVE" value={completedDays} sub={`of ${totalDays} total`} color="#c77dff" />
+        <StatCard label="FULL DAYS ✓" value={fullyDone} sub="all tasks done" color="#6bcb77" />
+        <StatCard label="OVERALL" value={`${pct}%`} sub="program progress" color="#ffd93d" glow />
+        <StatCard label="LC SOLVED" value={totalLC} sub={`${hardPct}% Hard`} color="#4d96ff" />
+        <StatCard label="HARD" value={diffCounts.Hard} sub={`${diffCounts.Medium} Medium`} color="#ff6b9d" />
       </div>
 
-      {/* Overall progress bar */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: 'JetBrains Mono' }}>8-month journey</span>
-          <span style={{ fontSize: 12, color: '#ff6b1a', fontFamily: 'JetBrains Mono' }}>Day {completedDays} of {totalDays}</span>
+      <div style={{ marginBottom:28 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+          <span style={{ fontFamily:'Syne', fontSize:14, color:'#fff', fontWeight:700 }}>Overall Journey</span>
+          <span style={{ fontFamily:'JetBrains Mono', fontSize:13, color:'#ffd93d' }}>{pct}%</span>
         </div>
-        <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${overallPct}%`, background: 'linear-gradient(90deg, #ff6b1a, #ffd93d, #c77dff)', borderRadius: 4, transition: 'width 1s ease', boxShadow: '0 0 15px rgba(255,107,26,0.4)' }} />
+        <div style={{ height:10, background:'rgba(255,255,255,0.06)', borderRadius:5, overflow:'hidden' }}>
+          <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(90deg,#ff6b1a,#ffd93d,#ff6b9d)', borderRadius:5, transition:'width 0.8s ease', boxShadow:'0 0 14px rgba(255,107,26,0.5)' }} />
         </div>
       </div>
 
-      {/* Phase progress */}
-      <div style={{ marginBottom: 28 }}>
-        <h3 style={{ fontFamily: 'Syne', fontSize: 16, color: 'rgba(255,255,255,0.7)', margin: '0 0 14px' }}>Phase Breakdown</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {PHASES.map(phase => {
-            const phaseDays = progress.filter(p => {
-              const s = p.date
-              // rough phase check by position
-              return true
-            }).length
+      <div style={{ marginBottom:28 }}>
+        <div style={{ fontFamily:'JetBrains Mono', fontSize:10, color:'rgba(255,255,255,0.25)', marginBottom:14, letterSpacing:1 }}>PHASE BREAKDOWN</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {phaseData.map(p => {
+            const ppct = p.total > 0 ? Math.round(p.done/p.total*100) : 0
             return (
-              <div key={phase.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 14, minWidth: 28 }}>{phase.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Phase {phase.id}: {phase.name}</span>
-                    <span style={{ fontSize: 11, color: phase.color, fontFamily: 'JetBrains Mono' }}>{phase.dates}</span>
-                  </div>
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
-                    <div style={{ height: '100%', width: '0%', background: phase.color, borderRadius: 2 }} />
-                  </div>
+              <div key={p.id} style={{ background:'rgba(255,255,255,0.02)', border:`1px solid ${p.color}22`, borderRadius:12, padding:'12px 16px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                  <span style={{ fontFamily:'Syne', fontSize:13, color:'rgba(255,255,255,0.7)', fontWeight:600 }}>
+                    {p.icon} Phase {p.id}: {p.name}
+                  </span>
+                  <span style={{ fontFamily:'JetBrains Mono', fontSize:11, color:p.color }}>{p.done}/{p.total} days · {ppct}%</span>
+                </div>
+                <div style={{ height:5, background:'rgba(255,255,255,0.05)', borderRadius:3, overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:`${ppct}%`, background:`linear-gradient(90deg,${p.color},${p.color}99)`, borderRadius:3, transition:'width 0.6s ease', boxShadow:`0 0 8px ${p.color}55` }} />
                 </div>
               </div>
             )
@@ -117,74 +115,49 @@ export default function ProgressDashboard() {
         </div>
       </div>
 
-      {/* LeetCode tracker */}
-      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontFamily: 'Syne', fontSize: 16, color: '#c77dff', margin: 0 }}>⚡ LeetCode Log</h3>
-          <button
-            onClick={() => setShowLcForm(!showLcForm)}
-            style={{ padding: '6px 14px', background: 'rgba(199,125,255,0.15)', border: '1px solid rgba(199,125,255,0.3)', borderRadius: 20, color: '#c77dff', cursor: 'pointer', fontFamily: 'Syne', fontSize: 12 }}
-          >
-            + Log Problem
+      <div style={{ marginBottom:28 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+          <div style={{ fontFamily:'JetBrains Mono', fontSize:10, color:'rgba(255,255,255,0.25)', letterSpacing:1 }}>LEETCODE LOG ({totalLC} PROBLEMS)</div>
+          <button onClick={() => setShowLcForm(!showLcForm)}
+            style={{ fontSize:11, background:'rgba(255,107,26,0.12)', border:'1px solid rgba(255,107,26,0.28)', color:'#ff6b1a', padding:'5px 13px', borderRadius:18, cursor:'pointer', fontFamily:'JetBrains Mono', transition:'all 0.2s' }}>
+            {showLcForm ? '✕ Cancel' : '+ Log Problem'}
           </button>
         </div>
 
         {showLcForm && (
-          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 16, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input type="text" value={lcForm.problem} onChange={e => setLcForm({ ...lcForm, problem: e.target.value })} placeholder="Problem name / number (e.g. 'Two Sum #1')" style={{ width: '100%', boxSizing: 'border-box' }} />
-            <div style={{ display: 'flex', gap: 8 }}>
-              {DIFFICULTIES.map(d => (
-                <button key={d} onClick={() => setLcForm({ ...lcForm, difficulty: d })}
-                  style={{ flex: 1, padding: '6px 0', border: '1px solid', borderColor: lcForm.difficulty === d ? (d==='Easy'?'#6bcb77':d==='Medium'?'#ffd93d':'#ff6b1a') : 'rgba(255,255,255,0.1)', background: lcForm.difficulty === d ? 'rgba(255,107,26,0.1)' : 'transparent', color: lcForm.difficulty === d ? '#fff' : 'rgba(255,255,255,0.4)', borderRadius: 8, cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12 }}>
-                  {d}
-                </button>
-              ))}
+          <div className="float-anim" style={{ background:'rgba(255,107,26,0.06)', border:'1px solid rgba(255,107,26,0.2)', borderRadius:13, padding:'18px 20px', marginBottom:16 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', display:'block', marginBottom:5 }}>PROBLEM NAME / #</label>
+                <input type="text" value={lcForm.problem} onChange={e=>setLcForm(f=>({...f,problem:e.target.value}))} placeholder="e.g. Two Sum" />
+              </div>
+              <div>
+                <label style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', display:'block', marginBottom:5 }}>TIME (minutes)</label>
+                <input type="number" value={lcForm.timeTaken} onChange={e=>setLcForm(f=>({...f,timeTaken:Number(e.target.value)}))} min={1} max={120} />
+              </div>
             </div>
-            <select value={lcForm.pattern} onChange={e => setLcForm({ ...lcForm, pattern: e.target.value })}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8e6e0', borderRadius: 8, padding: '8px 12px', fontFamily: 'DM Sans', fontSize: 14 }}>
-              {PATTERNS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>Time: {lcForm.timeTaken} min</span>
-              <input type="range" min="5" max="90" value={lcForm.timeTaken} onChange={e => setLcForm({ ...lcForm, timeTaken: Number(e.target.value) })}
-                style={{ flex: 1, accentColor: '#c77dff' }} />
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', display:'block', marginBottom:5 }}>DIFFICULTY</label>
+                <select value={lcForm.difficulty} onChange={e=>setLcForm(f=>({...f,difficulty:e.target.value}))}>
+                  {DIFFICULTIES.map(d=><option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', display:'block', marginBottom:5 }}>PATTERN</label>
+                <select value={lcForm.pattern} onChange={e=>setLcForm(f=>({...f,pattern:e.target.value}))}>
+                  {PATTERNS.map(p=><option key={p}>{p}</option>)}
+                </select>
+              </div>
             </div>
-            <textarea value={lcForm.approach} onChange={e => setLcForm({ ...lcForm, approach: e.target.value })} placeholder="Your approach / pattern you used (required)" style={{ width: '100%', minHeight: 60, resize: 'vertical', boxSizing: 'border-box' }} />
-            <button onClick={handleLcSubmit} disabled={!lcForm.problem || !lcForm.approach}
-              style={{ padding: '10px 0', background: lcForm.problem && lcForm.approach ? 'linear-gradient(135deg, #c77dff, #4d96ff)' : 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, color: lcForm.problem && lcForm.approach ? '#fff' : 'rgba(255,255,255,0.2)', cursor: lcForm.problem && lcForm.approach ? 'pointer' : 'not-allowed', fontFamily: 'Syne', fontWeight: 700 }}>
-              Save Problem
+            <div style={{ marginBottom:12 }}>
+              <label style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono', display:'block', marginBottom:5 }}>APPROACH / KEY INSIGHT</label>
+              <textarea value={lcForm.approach} onChange={e=>setLcForm(f=>({...f,approach:e.target.value}))} placeholder="What was the key insight?" style={{ minHeight:60 }} />
+            </div>
+            <button onClick={handleSubmit} disabled={!lcForm.problem.trim()||submitting}
+              style={{ padding:'10px 24px', background: lcForm.problem.trim()&&!submitting ? 'linear-gradient(135deg,#ff6b1a,#ffd93d)' : 'rgba(255,255,255,0.05)', border:'none', borderRadius:10, color: lcForm.problem.trim()&&!submitting ? '#000' : 'rgba(255,255,255,0.3)', fontFamily:'Syne', fontWeight:700, fontSize:14, cursor: lcForm.problem.trim()&&!submitting ? 'pointer' : 'not-allowed', transition:'all 0.2s' }}>
+              {submitting ? 'Saving...' : '⚡ Log Problem'}
             </button>
-          </div>
-        )}
-
-        {/* Pattern breakdown */}
-        {sortedPatterns.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', marginBottom: 10 }}>PATTERN BREAKDOWN</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {sortedPatterns.map(([pat, count]) => (
-                <span key={pat} style={{ fontSize: 11, background: 'rgba(199,125,255,0.1)', border: '1px solid rgba(199,125,255,0.2)', color: '#c77dff', padding: '3px 10px', borderRadius: 20, fontFamily: 'JetBrains Mono' }}>
-                  {pat}: {count}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent LC */}
-        {lcLog.length > 0 && (
-          <div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', marginBottom: 10 }}>RECENT SOLVES</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {lcLog.slice(0, 8).map(p => (
-                <div key={p.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <span style={{ fontSize: 11, fontFamily: 'JetBrains Mono', color: p.difficulty==='Easy'?'#6bcb77':p.difficulty==='Hard'?'#ff6b1a':'#ffd93d', minWidth: 50 }}>{p.difficulty}</span>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', flex: 1 }}>{p.problem}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono' }}>{p.time_taken}m</span>
-                  <span style={{ fontSize: 10, background: 'rgba(199,125,255,0.1)', color: '#c77dff', padding: '2px 8px', borderRadius: 10 }}>{p.pattern}</span>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>
