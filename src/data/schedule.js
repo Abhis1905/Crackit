@@ -136,7 +136,7 @@ function getPhase1WeekIndex(date) {
 }
 
 // Break day rules
-function isBreakDay(dateStr) {
+export function isBreakDay(dateStr) {
   const breakDays = [
     '2026-05-01', // Labour day break
     '2026-06-15', // College settle break
