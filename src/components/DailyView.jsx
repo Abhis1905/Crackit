@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getFullSchedule } from '../data/schedule'
+import { getScheduleForDate } from '../data/schedule'
 import { getTodayIST, isDatePast, isDateToday, isDateFuture, getRandomSurprise, NEETCODE_ROADMAP, DSA_SHEET } from '../data/schedule'
 import { getProgress, saveProgress } from '../lib/supabase'
 import ConfettiBurst from './ConfettiBurst'
@@ -67,7 +67,7 @@ export default function DailyView({dateStr:propDate}){
   const isPast=isDatePast(dateStr),isToday=isDateToday(dateStr),isFuture=isDateFuture(dateStr)
 
   useEffect(()=>{
-    const s=getFullSchedule(dateStr); setSchedule(s)
+    const s=getScheduleForDate(dateStr); setSchedule(s)
     getProgress(dateStr).then(data=>{if(data){setChecks(data.checks||{});setNotes(data.notes||'')}; setLoading(false)}).catch(()=>setLoading(false))
   },[dateStr])
 
