@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getFullSchedule } from '../data/fullSchedule'
+import { getFullSchedule } from '../data/schedule'
 import { getTodayIST, isDatePast, isDateToday, isDateFuture, getRandomSurprise, NEETCODE_ROADMAP, DSA_SHEET } from '../data/schedule'
 import { getProgress, saveProgress } from '../lib/supabase'
 import ConfettiBurst from './ConfettiBurst'
