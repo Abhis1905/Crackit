@@ -4,7 +4,7 @@ export { MASTER_SCHEDULE, SCHEDULE_START, getScheduleByDate, getScheduleByDayNum
 export const NEETCODE_ROADMAP = 'https://neetcode.io/roadmap';
 export const DSA_SHEET = 'https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/';
 export const SHRADHA_SHEET = 'https://www.youtube.com/playlist?list=PLfqMhTWNBTe137I_EPQd34TsgV6IO55pt';
-export const BREAK_DAYS = [];
+export const BREAK_DAYS = new Set([]);
 
 export const PHASES = [
   { id: 1, name: 'Java + DSA',       icon: '☕', color: '#ff6b1a' },

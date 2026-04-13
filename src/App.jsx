@@ -8,7 +8,6 @@ import PhasesView from './components/PhasesView'
 import CalendarView from './components/CalendarView'
 import { getTodayIST, formatDate, getDayNumber, getTotalDays, PHASES } from './data/schedule'
 import { getAllProgress } from './lib/supabase'
-import schedule_data from './data/schedule_data'
 const TABS = [
   { id: 'today',    label: "Today's Mission", icon: '🎯' },
   { id: 'calendar', label: 'Calendar',         icon: '📅' },
