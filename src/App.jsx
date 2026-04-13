@@ -1,4 +1,3 @@
-import Fullschedule from './components/Fullschedule'
 import ResourceHub from './components/ResourceHub'
 import QuickLinks from './components/QuickLinks'
 import { useState, useEffect } from 'react'
