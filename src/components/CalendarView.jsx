@@ -1,151 +1,228 @@
 import { useState, useEffect } from 'react'
-import { getTodayIST, isDateToday, PHASES, BREAK_DAYS } from '../data/schedule'
 import { getAllProgress } from '../lib/supabase'
 
-const PHASE_RANGES = [
-  { id:1, start:'2026-04-14', end:'2026-06-01', color:'#f97316' },
-  { id:2, start:'2026-06-02', end:'2026-07-13', color:'#6bcb77' },
-  { id:3, start:'2026-07-14', end:'2026-09-07', color:'#c77dff' },
-  { id:4, start:'2026-09-08', end:'2026-11-16', color:'#4d96ff' },
-  { id:5, start:'2026-11-17', end:'2026-12-31', color:'#ffd93d' },
-  { id:6, start:'2027-01-01', end:'2027-01-31', color:'#ff6b9d' },
-]
-
-function getPhaseColor(dateStr) {
-  for (const p of PHASE_RANGES) {
-    if (dateStr >= p.start && dateStr <= p.end) return p.color
+// Safe imports — works whether these exports exist or not
+let getTodayIST, PHASES
+try {
+  const mod = await import('../data/schedule.js')
+  getTodayIST = mod.getTodayIST
+  PHASES = mod.PHASES
+} catch {
+  getTodayIST = () => {
+    const now = new Date()
+    const ist = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 60 * 60 * 1000)
+    return `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`
   }
-  return null
+  PHASES = []
 }
 
+const BREAK_DAYS = new Set([
+  '2026-05-01','2026-06-15','2026-07-04','2026-08-15','2026-09-05',
+  '2026-10-02','2026-10-25','2026-10-26','2026-11-15','2026-12-25','2026-12-26'
+])
+
+const PC = ['#f97316','#6bcb77','#c77dff','#4d96ff','#ffd93d','#ff6b9d']
+
+function getPhase(d) {
+  if (d >= '2026-04-14' && d <= '2026-06-01') return 1
+  if (d >= '2026-06-02' && d <= '2026-07-27') return 2
+  if (d >= '2026-07-28' && d <= '2026-09-28') return 3
+  if (d >= '2026-09-29' && d <= '2026-12-14') return 4
+  if (d >= '2026-12-15' && d <= '2026-12-31') return 5
+  return 0
+}
+
+function getTodayISTSafe() {
+  try {
+    if (typeof getTodayIST === 'function') return getTodayIST()
+  } catch {}
+  const now = new Date()
+  const ist = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 60 * 60 * 1000)
+  return `${ist.getFullYear()}-${String(ist.getMonth()+1).padStart(2,'0')}-${String(ist.getDate()).padStart(2,'0')}`
+}
+
+const MONTHS = [
+  {y:2026,m:3,label:'April 2026'},
+  {y:2026,m:4,label:'May 2026'},
+  {y:2026,m:5,label:'June 2026'},
+  {y:2026,m:6,label:'July 2026'},
+  {y:2026,m:7,label:'August 2026'},
+  {y:2026,m:8,label:'September 2026'},
+  {y:2026,m:9,label:'October 2026'},
+  {y:2026,m:10,label:'November 2026'},
+  {y:2026,m:11,label:'December 2026'},
+]
+
 export default function CalendarView({ onSelectDate }) {
-  const today = getTodayIST()
-  const [viewYear, setViewYear] = useState(2026)
-  const [viewMonth, setViewMonth] = useState(3)
-  const [progress, setProgress] = useState({})
-  const [hoveredDate, setHoveredDate] = useState(null)
+  const [today, setToday] = useState('')
+  const [ymi, setYmi] = useState(0)
+  const [prog, setProg] = useState({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getAllProgress().then(data => {
-      const map = {}
-      data.forEach(p => {
-        const vals = Object.values(p.checks || {})
-        if (vals.length > 0) map[p.date] = vals.every(Boolean) ? 'full' : 'partial'
+    try {
+      setToday(getTodayISTSafe())
+    } catch {
+      setToday(new Date().toISOString().slice(0, 10))
+    }
+
+    getAllProgress()
+      .then(data => {
+        const m = {}
+        if (Array.isArray(data)) {
+          data.forEach(p => {
+            try {
+              const v = Object.values(p.checks || {})
+              if (v.length > 0) m[p.date] = v.every(Boolean) ? 'full' : 'partial'
+            } catch {}
+          })
+        }
+        setProg(m)
       })
-      setProgress(map)
-    })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+
+    // Jump to current month
+    const now = new Date()
+    const curIdx = MONTHS.findIndex(m => m.y === now.getFullYear() && m.m === now.getMonth())
+    if (curIdx >= 0) setYmi(curIdx)
   }, [])
 
-  const months = [
-    {y:2026,m:3,label:'April 2026'},{y:2026,m:4,label:'May 2026'},{y:2026,m:5,label:'June 2026'},
-    {y:2026,m:6,label:'July 2026'},{y:2026,m:7,label:'August 2026'},{y:2026,m:8,label:'September 2026'},
-    {y:2026,m:9,label:'October 2026'},{y:2026,m:10,label:'November 2026'},{y:2026,m:11,label:'December 2026'},
-    {y:2027,m:0,label:'January 2027'},
-  ]
+  const { y, m, label } = MONTHS[ymi] || MONTHS[0]
+  const days = new Date(y, m + 1, 0).getDate()
+  const firstDay = new Date(y, m, 1).getDay()
 
-  const curIdx = months.findIndex(m => m.y === viewYear && m.m === viewMonth)
-  const curMonthMeta = months[curIdx]
+  function ds(d) {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  }
 
-  function fmt(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` }
-  function daysIn(y,m) { return new Date(y, m+1, 0).getDate() }
-  function firstDay(y,m) { return new Date(y,m,1).getDay() }
-  function inProgram(ds) { return ds >= '2026-04-14' && ds <= '2027-01-31' }
-
-  const days = daysIn(viewYear, viewMonth)
-  const fd = firstDay(viewYear, viewMonth)
-
-  let mFull = 0, mPartial = 0, mProgram = 0
-  for (let d = 1; d <= days; d++) {
-    const ds = fmt(viewYear, viewMonth, d)
-    if (inProgram(ds) && !BREAK_DAYS.has(ds)) mProgram++
-    if (progress[ds] === 'full') mFull++
-    if (progress[ds] === 'partial') mPartial++
+  function inProg(d) {
+    return d >= '2026-04-14' && d <= '2026-12-31'
   }
 
   return (
-    <div style={{ position:'relative', zIndex:1 }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6, flexWrap:'wrap', gap:10 }}>
-        <div>
-          <h2 style={{ fontFamily:'Syne', fontSize:24, color:'#fff', margin:'0 0 3px', fontWeight:800 }}>📅 Full Calendar</h2>
-          <p style={{ color:'rgba(255,255,255,0.38)', fontSize:13, margin:0 }}>Apr 2026 → Jan 2027 · 262 days</p>
-        </div>
-        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          <button onClick={() => { if(curIdx>0){setViewYear(months[curIdx-1].y);setViewMonth(months[curIdx-1].m)} }}
-            disabled={curIdx===0}
-            style={{ width:34,height:34,borderRadius:8,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.6)',cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center' }}>
-            ‹
-          </button>
-          <span style={{ fontFamily:'Syne', fontSize:15, color:'#fff', fontWeight:700, minWidth:130, textAlign:'center' }}>{curMonthMeta?.label}</span>
-          <button onClick={() => { if(curIdx<months.length-1){setViewYear(months[curIdx+1].y);setViewMonth(months[curIdx+1].m)} }}
-            disabled={curIdx===months.length-1}
-            style={{ width:34,height:34,borderRadius:8,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.6)',cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center' }}>
-            ›
-          </button>
-        </div>
-      </div>
+    <div style={{ position: 'relative', zIndex: 1 }}>
+      <h2 style={{ fontFamily: 'Syne', fontSize: 24, color: '#fff', margin: '0 0 6px', fontWeight: 800 }}>
+        📅 Calendar View
+      </h2>
+      <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 14, margin: '0 0 20px' }}>
+        Click any date to view that day's tasks.
+      </p>
 
-      <div style={{ display:'flex', gap:8, marginBottom:18, flexWrap:'wrap' }}>
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         {[
-          {label:'Active days',val:mProgram,c:'rgba(255,255,255,0.3)'},
-          {label:'Full ✓',val:mFull,c:'#6bcb77'},
-          {label:'Partial',val:mPartial,c:'#ffd93d'},
-          {label:'Remaining',val:Math.max(0,mProgram-mFull-mPartial),c:'rgba(255,255,255,0.3)'},
-        ].map(s => (
-          <div key={s.label} style={{ background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:9, padding:'7px 14px', display:'flex', gap:6, alignItems:'center' }}>
-            <span style={{ fontFamily:'Syne', fontSize:16, color:s.c, fontWeight:700 }}>{s.val}</span>
-            <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)', fontFamily:'JetBrains Mono' }}>{s.label}</span>
+          { c: '#ff6b1a', l: 'Today' },
+          { c: '#6bcb77', l: 'Fully done' },
+          { c: '#ffd93d', l: 'Partial' },
+          { c: 'rgba(255,255,255,.12)', l: 'In program' },
+          { c: '#6bcb77', l: '🌿 Rest day', soft: true },
+        ].map(x => (
+          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: x.c, opacity: x.soft ? 0.5 : 1 }} />
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{x.l}</span>
           </div>
         ))}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4, marginBottom:6 }}>
+      {/* Month nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <button
+          onClick={() => setYmi(i => Math.max(0, i - 1))}
+          disabled={ymi === 0}
+          style={{ background: 'none', border: '1px solid rgba(255,255,255,.1)', color: ymi === 0 ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.6)', borderRadius: 8, padding: '6px 16px', cursor: ymi === 0 ? 'not-allowed' : 'pointer', fontFamily: 'Syne', fontSize: 16 }}
+        >←</button>
+        <span style={{ fontFamily: 'Syne', fontSize: 18, color: '#fff', fontWeight: 700 }}>{label}</span>
+        <button
+          onClick={() => setYmi(i => Math.min(MONTHS.length - 1, i + 1))}
+          disabled={ymi === MONTHS.length - 1}
+          style={{ background: 'none', border: '1px solid rgba(255,255,255,.1)', color: ymi === MONTHS.length - 1 ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.6)', borderRadius: 8, padding: '6px 16px', cursor: ymi === MONTHS.length - 1 ? 'not-allowed' : 'pointer', fontFamily: 'Syne', fontSize: 16 }}
+        >→</button>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-          <div key={d} style={{ textAlign:'center', fontSize:10, color:'rgba(255,255,255,0.25)', fontFamily:'JetBrains Mono', padding:'4px 0' }}>{d}</div>
+          <div key={d} style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,.25)', fontFamily: 'JetBrains Mono', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4 }}>
-        {Array.from({length:fd}).map((_,i) => <div key={`e${i}`} />)}
-        {Array.from({length:days}).map((_,i) => {
-          const d = i+1
-          const ds = fmt(viewYear, viewMonth, d)
-          const isToday2 = ds === today
-          const isBreak2 = BREAK_DAYS.has(ds)
-          const prog = progress[ds]
-          const inProg = inProgram(ds)
-          const pc = getPhaseColor(ds)
-          const hovered = hoveredDate === ds
-          let bg = 'rgba(255,255,255,0.02)'
-          let border = '1px solid rgba(255,255,255,0.05)'
-          let textColor = 'rgba(255,255,255,0.35)'
-          if (!inProg) { bg = 'transparent'; textColor = 'rgba(255,255,255,0.12)'; border = '1px solid transparent' }
-          else if (isBreak2) { bg = 'rgba(107,203,119,0.07)'; border = '1px solid rgba(107,203,119,0.18)'; textColor = '#6bcb77' }
-          else if (prog === 'full') { bg = 'rgba(107,203,119,0.12)'; border = '1px solid rgba(107,203,119,0.35)'; textColor = '#6bcb77' }
-          else if (prog === 'partial') { bg = 'rgba(255,211,61,0.08)'; border = '1px solid rgba(255,211,61,0.25)'; textColor = '#ffd93d' }
-          else if (pc) { bg = `${pc}0d`; border = `1px solid ${pc}22`; textColor = 'rgba(255,255,255,0.65)' }
-          if (isToday2) { bg = 'rgba(255,107,26,0.18)'; border = '1.5px solid rgba(255,107,26,0.6)'; textColor = '#ff6b1a' }
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+        {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
+        {Array.from({ length: days }, (_, i) => {
+          const day = i + 1
+          const d = ds(day)
+          const ip = inProg(d)
+          const it = d === today
+          const ib = BREAK_DAYS.has(d)
+          const p = prog[d]
+          const ph = getPhase(d)
+          const pc = ph > 0 ? PC[ph - 1] : null
+          const isSun = new Date(d + 'T00:00:00').getDay() === 0
+
+          let bg = ip ? 'rgba(255,255,255,.02)' : 'transparent'
+          let border = ip ? (pc ? `${pc}25` : 'rgba(255,255,255,.06)') : 'transparent'
+          let textColor = ip ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.12)'
+
+          if (it) { bg = 'rgba(255,107,26,.18)'; border = '#ff6b1a'; textColor = '#fff' }
+          else if (p === 'full') { bg = 'rgba(107,203,119,.12)'; border = 'rgba(107,203,119,.5)'; textColor = '#6bcb77' }
+          else if (p === 'partial') { bg = 'rgba(255,211,61,.08)'; border = 'rgba(255,211,61,.35)'; textColor = '#ffd93d' }
+          else if (ib) { bg = 'rgba(107,203,119,.04)'; border = 'rgba(107,203,119,.15)' }
+
           return (
-            <div key={ds} onClick={() => inProg && onSelectDate(ds)}
-              onMouseEnter={() => setHoveredDate(ds)}
-              onMouseLeave={() => setHoveredDate(null)}
+            <button
+              key={day}
+              onClick={() => ip && onSelectDate && onSelectDate(d)}
+              title={it ? 'Today' : ib ? 'Rest day' : ip ? `Day ${day}` : ''}
               style={{
-                background: hovered && inProg ? (pc ? `${pc}1a` : 'rgba(255,255,255,0.06)') : bg,
-                border, borderRadius:8, padding:'7px 4px 5px',
-                textAlign:'center', cursor: inProg ? 'pointer' : 'default',
-                transition:'all 0.18s ease',
-                transform: hovered && inProg ? 'scale(1.08)' : 'scale(1)',
-                boxShadow: isToday2 ? '0 0 14px rgba(255,107,26,0.4)' : prog === 'full' ? '0 0 8px rgba(107,203,119,0.2)' : 'none',
-                position:'relative',
-              }}>
-              <div style={{ fontSize:13, fontFamily:'Syne', color:textColor, fontWeight: isToday2 ? 800 : 500, lineHeight:1 }}>{d}</div>
-              {inProg && pc && !isBreak2 && (
-                <div style={{ width:4, height:4, borderRadius:'50%', background: prog==='full' ? '#6bcb77' : prog==='partial' ? '#ffd93d' : pc, margin:'4px auto 0', opacity:0.8 }} />
+                background: bg,
+                border: `1px solid ${border}`,
+                borderRadius: 8,
+                aspectRatio: '1',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: ip ? 'pointer' : 'default',
+                transition: 'all .15s',
+                padding: 2,
+                minHeight: 36,
+              }}
+            >
+              <span style={{ fontSize: 13, color: textColor, fontWeight: it ? 700 : 400, fontFamily: it ? 'Syne' : 'DM Sans', lineHeight: 1 }}>
+                {day}
+              </span>
+              {isSun && ip && (
+                <span style={{ fontSize: 7, color: pc || 'rgba(255,255,255,.2)', fontFamily: 'JetBrains Mono', lineHeight: 1, marginTop: 2 }}>SUN</span>
               )}
-              {isBreak2 && <div style={{ fontSize:8, marginTop:2 }}>🌿</div>}
-            </div>
+              {ib && <span style={{ fontSize: 9, lineHeight: 1 }}>🌿</span>}
+            </button>
           )
         })}
       </div>
+
+      {/* Phase legend */}
+      <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {[
+          { id:1, name:'Survival Sprint',   color:'#f97316' },
+          { id:2, name:'Backend Ignition',  color:'#6bcb77' },
+          { id:3, name:'Interview Forge',   color:'#c77dff' },
+          { id:4, name:'Placement Mode',    color:'#4d96ff' },
+          { id:5, name:'Final Push',        color:'#ffd93d' },
+        ].map(p => (
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'rgba(255,255,255,.3)' }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: p.color }} />
+            P{p.id}: {p.name}
+          </div>
+        ))}
+      </div>
+
+      {loading && (
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: 'rgba(255,255,255,.3)', fontFamily: 'JetBrains Mono' }}>
+          loading progress...
+        </div>
+      )}
     </div>
   )
 }
