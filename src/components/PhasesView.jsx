@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { PHASES, NEETCODE_ROADMAP, SHRADHA_SHEET } from '../data/schedule'
+import { PHASES, NEETCODE_ROADMAP, DSA_SHEET } from '../data/schedule'
 
 const DSA_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_PoEEiE6lk79cmT1kqJpsnkB14b5ImdKpDrXoPBsw2U/edit?usp=sharing"
 
