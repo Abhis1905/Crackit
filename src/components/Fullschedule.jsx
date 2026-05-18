@@ -1,22 +1,52 @@
-// Fullschedule.js — adapter: maps MASTER_SCHEDULE entries to DailyView format
-import { MASTER_SCHEDULE } from '../data/schedule_data';
+import {
+  getScheduleByDate,
+  getDayNumber,
+  getPhase,
+  isSunday,
+  isVacation,
+  isWeekend,
+} from '../data/schedule';
 
 export function getFullSchedule(dateStr) {
-  const day = MASTER_SCHEDULE.find(d => d.date === dateStr);
-  if (!day) return null;
+  const entry = getScheduleByDate(dateStr);
+  if (!entry) return null;
+
+  const TYPE_MAP = {
+    dsa:      'sheet',
+    java:     'lecture',
+    frontend: 'build',
+    backend:  'build',
+    aptitude: 'aptitude',
+    oops:     'lecture',
+    sql:      'lecture',
+    practice: 'practice',
+  };
+
+  const practice = (entry.tasks || []).map((task, i) => ({
+    id:          task.id || `t${i}`,
+    label:       task.label,
+    type:        TYPE_MAP[task.type] || task.type || 'practice',
+    link:        task.link || null,
+    needsVerify: task.type === 'dsa',
+  }));
+
+  const vacation = isVacation(dateStr);
+  const weekend  = isWeekend(dateStr);
+
   return {
-    phase:      day.phase,
-    day:        day.dayNum,
-    week:       day.week,
-    title:      day.title,
-    tip:        day.tip,
-    commQuote:  day.commQuote  || null,
-    aptQuote:   day.aptQuote   || null,
-    isBreak:    day.isBreak,
-    isSunday:   day.isSunday,
-    timeBlocks: day.timeBlocks || [],
-    practice:   day.practice   || [],
-    communication: day.practice?.find(t => t.type === 'communication') || null,
-    surprises:  day.surprises  || null,
+    title:         entry.title,
+    phase:         entry.phase,
+    day:           getDayNumber(dateStr),
+    hours:         entry.hours,
+    isSunday:      isSunday(dateStr),
+    isBreak:       false,
+    tip:           vacation
+                     ? '🏖️ Vacation mode — full sessions, no excuses.'
+                     : weekend
+                     ? '📅 Weekend — longer sessions. Push harder.'
+                     : '🎓 College day — evening grind. 3 tasks minimum.',
+    timeBlocks:    [],
+    practice,
+    communication: null,
   };
 }

@@ -1,286 +1,608 @@
 import { useState, useEffect, useRef } from 'react'
-import { PHASES, NEETCODE_ROADMAP, DSA_SHEET } from '../data/schedule'
-
-const DSA_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_PoEEiE6lk79cmT1kqJpsnkB14b5ImdKpDrXoPBsw2U/edit?usp=sharing"
+import { PHASES, getTodayIST, getPhase } from '../data/schedule'
 
 const PHASE_DETAILS = [
   {
     id: 1,
-    icon: "🔥",
-    color: "#f97316",
-    glow: "rgba(249,115,22,0.4)",
-    duration: "Apr 14 – Jun 1 · 48 days · Full day available",
-    mission: "Build Java foundations + DSA base. No shortcuts. This phase determines everything.",
-    checkpoint: "65 LC problems · 1 deployed Java project · NeetCode streak started",
+    icon: '☕',
+    color: '#f97316',
+    glow: 'rgba(249,115,22,0.4)',
+    codename: 'IRON FOUNDATION',
+    duration: 'May 17 – May 24 · 8 days · 8 hrs/day',
+    mission: 'Zero DSA. Build Java muscle memory so every algorithm you write later will be clean. Frontend starts on weekends.',
+    checkpoint: 'Java: variables, loops, arrays, strings, sorting all coded from scratch · Profile page live on GitHub Pages',
+    threat: 'CRITICAL',
     weeks: [
-      { label: "Week 1", dates: "Apr 14–20", topics: "Java syntax, data types, loops, methods", dsa: "Arrays: Contains Dup, Valid Anagram, Two Sum", build: "Calculator CLI", apt: "% + Ratios 20q" },
-      { label: "Week 2", dates: "Apr 21–27", topics: "OOP — Classes, Inheritance, Polymorphism", dsa: "Two Pointers: Palindrome, 3Sum, Container", build: "Bank Account OOP", apt: "Time & Work 20q" },
-      { label: "Week 3", dates: "Apr 28–May 4", topics: "Collections, HashMap, Generics", dsa: "Sliding Window: Buy Stock, Longest Substr", build: "Grade Manager CLI", apt: "Profit & Loss 20q" },
-      { label: "Week 4", dates: "May 5–11", topics: "Exceptions, File I/O, Java 8 Streams", dsa: "LinkedList: Reverse, Merge Sorted, Cycle", build: "Custom LinkedList Java", apt: "Permutations 20q" },
-      { label: "Week 5", dates: "May 12–18", topics: "Multithreading basics, JDBC intro", dsa: "Stack: Valid Parens, Min Stack, Daily Temps", build: "Expression Evaluator CLI", apt: "Logical Reasoning 20q" },
-      { label: "Week 6", dates: "May 19–25", topics: "Design Patterns: Singleton, Factory, Builder", dsa: "Trees: Invert, Max Depth, Diameter, BFS", build: "BinaryTree Java impl", apt: "Verbal basics 20q" },
-      { label: "Week 7", dates: "May 26–Jun 1", topics: "Review + GitHub deploy week", dsa: "BST: Validate, Kth Smallest, LCA", build: "GitHub deploy + README", apt: "GFG OA mock 60min" },
+      { label: 'Days 1–4', dates: 'May 17–20', topics: 'Variables, data types, operators, if/else, switch, loops (for/while/do-while)', dsa: 'No DSA yet — Java instinct first', build: 'Console calculator, number guessing game', apt: 'IndiaBix: Number System, Percentages, Ratios — 15q each' },
+      { label: 'Days 5–8', dates: 'May 21–24', topics: 'Arrays (1D/2D), Strings, StringBuilder, Enums, exception handling', dsa: 'No DSA yet', build: 'Student marks tracker CLI', apt: 'IndiaBix: Profit & Loss, Time & Work — 15q each · Weekend: Deploy profile page to GitHub Pages' },
     ],
     rules: [
-      "1 video → close tab → code immediately. Non-negotiable.",
-      "25-min timer on every LeetCode. No hints in first 25.",
-      "Push to GitHub every single day without exception.",
-      "Sunday = re-solve 3 hardest problems from scratch. No notes.",
+      'Write every program from scratch — no copy-paste, no ChatGPT.',
+      'Push to GitHub every single day. Non-negotiable.',
+      'No DSA until Day 9. Java instinct must come first.',
+      'Weekend: HTML/CSS/Flexbox/Grid — deploy a live page.',
     ],
   },
   {
     id: 2,
-    icon: "⚡",
-    color: "#6bcb77",
-    glow: "rgba(107,203,119,0.4)",
-    duration: "Jun 2 – Jul 13 · 42 days · 4-5 hrs/day",
-    mission: "Spring Boot + React + DSA escalation. Build your first production-grade full-stack app.",
-    checkpoint: "110 LC · Spring Boot + React app deployed (Render + Vercel) · JWT auth working",
+    icon: '🔥',
+    color: '#a855f7',
+    glow: 'rgba(168,85,247,0.4)',
+    codename: 'DUAL STRIKE',
+    duration: 'May 25 – Jun 14 · 21 days · 8 hrs vacation → 3 hrs college',
+    mission: 'DSA and OOP run in parallel every weekday. A2Z Steps 1–5. Frontend only on weekends. College starts Jun 8.',
+    checkpoint: 'A2Z Steps 1–5 complete · OOP: class/inheritance/polymorphism/interfaces/generics/streams all coded · React movie app deployed',
+    threat: 'HIGH',
     weeks: [
-      { label: "Week 1", dates: "Jun 2–8", topics: "Spring Boot Initializr, first REST endpoint", dsa: "Heaps: Merge K Sorted, Top K Frequent", build: "GET /hello → 200 in Postman", apt: "Mixed quant 15q" },
-      { label: "Week 2", dates: "Jun 9–15", topics: "Spring Data JPA, @Entity, PostgreSQL CRUD", dsa: "Stack: NGE II, Stock Span, Histogram", build: "CRUD API: User entity", apt: "Logical 15q" },
-      { label: "Week 3", dates: "Jun 16–22", topics: "Spring Security + JWT auth filter", dsa: "BST: Recover, Serialize, Largest BST", build: "Login/signup → JWT token", apt: "Critical Reasoning 15q" },
-      { label: "Week 4", dates: "Jun 23–29", topics: "React: components, props, useState, useEffect", dsa: "Heaps: Kth Small, Median Stream", build: "React Todo with useState", apt: "GFG OA 30q" },
-      { label: "Week 5", dates: "Jun 30–Jul 6", topics: "Tailwind CSS + React-SpringBoot connection", dsa: "Backtracking: Subsets, Comb Sum, Perms", build: "React+Tailwind calls your API", apt: "Mixed 15q" },
-      { label: "Week 6", dates: "Jul 7–13", topics: "MongoDB + Spring Data Mongo, NoSQL CRUD", dsa: "Graphs: Islands, Clone Graph, Pacific", build: "DEPLOY: Render + Vercel live URLs", apt: "15q + mock GD topic" },
+      { label: 'Week 1', dates: 'May 25–31', topics: 'OOP: class, object, constructor, encapsulation, inheritance', dsa: 'A2Z Step 1: count digits, reverse num, palindrome, GCD, Armstrong, prime · Step 2: all sorting', build: 'Student + BankAccount + Animal hierarchy', apt: 'IndiaBix: Coding-Decoding, Seating, Syllogisms — 15q each' },
+      { label: 'Week 2', dates: 'Jun 1–7', topics: 'OOP: polymorphism, abstract, interfaces, generics, lambda, Streams', dsa: 'A2Z Step 3: Arrays Easy + Medium + Hard (full section)', build: 'Shape hierarchy + generic Stack<T> · Weekend: React useState/useEffect + movie search app deployed on Vercel', apt: 'IndiaBix: mixed 30q mock · Weekend: Aptitude mock 30q' },
+      { label: 'Week 3', dates: 'Jun 8–14', topics: 'College starts — evening only. OOP: Comparable/Comparator, Collections deep dive, design patterns', dsa: 'A2Z Step 4: Binary Search (classic + on answer + hard) · Step 5: Strings', build: 'Movie app with React Router + Tailwind (weekend)', apt: 'IndiaBix: 15q daily · Weekend: 25q mock' },
     ],
     rules: [
-      "4-5 hrs weekdays. 7-8 hrs Sunday. No negotiation.",
-      "Spring Boot = enterprise architecture. JPMC runs it in prod.",
-      "Every project needs a live URL before it goes on resume.",
-      "No new tech until current one is deployed and working.",
+      'DSA + OOP every weekday without exception — both slots.',
+      'Frontend is weekend-only from Phase 2 onwards.',
+      'College starts Jun 8 — evening only (3 tasks, ~3 hrs).',
+      'Every DSA problem: write time/space complexity before moving on.',
     ],
   },
   {
     id: 3,
-    icon: "⚔️",
-    color: "#c77dff",
-    glow: "rgba(199,125,255,0.4)",
-    duration: "Jul 14 – Sep 7 · 56 days · 4-5 hrs/day",
-    mission: "Full Stack Project 2 + AI/ML + DP + Graphs. This is where 90% of candidates fall behind.",
-    checkpoint: "178 LC · 2 deployed projects (Spring Boot + ML) · Blind 75 ~80% done",
+    icon: '⚡',
+    color: '#6bcb77',
+    glow: 'rgba(107,203,119,0.4)',
+    codename: 'DEEP STRIKE',
+    duration: 'Jun 15 – Jul 20 · 36 days · 3 hrs weekdays · 7 hrs weekends',
+    mission: 'College mode weekdays. A2Z Steps 6–12: LL, Recursion, Bit Manipulation, Stack, Queue, Heaps, Greedy. Frontend deepens on weekends.',
+    checkpoint: 'A2Z Steps 6–12 complete · TypeScript migrated · Next.js blog deployed · CS Fundamentals: OS/DBMS/CN notes done',
+    threat: 'HIGH',
     weeks: [
-      { label: "Week 1", dates: "Jul 14–20", topics: "Python basics (Hitesh) + pandas, numpy", dsa: "DP: Climbing Stairs, House Robber, Min Cost", build: "Pandas CSV stats script", apt: "Data Interp 15q" },
-      { label: "Week 2", dates: "Jul 21–27", topics: "CampusX: scikit-learn, Logistic Regression", dsa: "DP: LCS, Coin Change, LIS", build: "Iris Classifier + confusion matrix", apt: "GFG OA 30q" },
-      { label: "Week 3", dates: "Jul 28–Aug 3", topics: "Decision Trees + Random Forest + cross-val", dsa: "Graphs: Course Schedule, Topological Sort", build: "Heart disease RF model + Flask API", apt: "Mixed 15q + puzzles" },
-      { label: "Week 4", dates: "Aug 4–10", topics: "Gaurav Sen: Hashing + Load Balancer + CAP", dsa: "Graphs: Prim's, Bellman Ford, Floyd", build: "System Design: URL Shortener 1-page doc", apt: "Mixed 20q timed" },
-      { label: "Week 5", dates: "Aug 11–17", topics: "Build Project 2: E-commerce or Expense API", dsa: "DP Hard: Wildcard, Palindrome Part", build: "Project 2 backend deployed", apt: "Weakest section 15q" },
-      { label: "Week 6", dates: "Aug 18–24", topics: "CampusX: K-Means + PCA + Flask deploy", dsa: "Greedy + Trie — all from Shradha", build: "ML: Flask + React deployed", apt: "GFG OA 30q" },
-      { label: "Week 7", dates: "Aug 25–31", topics: "Gaurav Sen: Pastebin + Rate Limiter design", dsa: "Graph: Dijkstra, Kruskal, Alien Dict", build: "Project 2 polish + README + live URL", apt: "Mixed 20q" },
-      { label: "Week 8", dates: "Sep 1–7", topics: "NeetCode: fill weakest categories from profile", dsa: "Remaining skipped Shradha problems", build: "System Design: Twitter Feed 1-page doc", apt: "AMCAT mock #1 — 90 min" },
+      { label: 'Week 1–2', dates: 'Jun 15–28', topics: 'LL (singly/doubly/hard) · Recursion + Backtracking (subsets, permutations, N-Queens, Sudoku)', dsa: 'A2Z Step 6: Linked List all problems · Step 7: Recursion + Backtracking', build: 'Weekend: TypeScript migration of movie app · Zustand favourites store', apt: 'IndiaBix 15q daily · OS fundamentals (weekend)' },
+      { label: 'Week 3–4', dates: 'Jun 29–Jul 12', topics: 'Bit Manipulation · Stack (monotonic, LRU Cache) · Queue · Sliding Window', dsa: 'A2Z Step 8: Bit Manip · Step 9: Stack + Queue · Step 10: Sliding Window', build: 'Weekend: Next.js blog · TanStack Query + Framer Motion in movie app', apt: 'IndiaBix 15q daily · DBMS + CN fundamentals (weekends)' },
+      { label: 'Week 5', dates: 'Jul 13–20', topics: 'Heaps · Greedy · SQL basics', dsa: 'A2Z Step 11: Heaps · Step 12: Greedy · SQL: 20 SQLZoo + 20 HackerRank problems', build: 'Weekend: JDBC intro · Portfolio site with CardioScan/NaturalApp/DSA Visualizer deployed', apt: 'IndiaBix 15q daily · 30q weekend mock' },
     ],
     rules: [
-      "Python = resume breadth only. Don't go too deep.",
-      "AI/ML = 1 deployed project minimum with live URL.",
-      "Communication practice starts here. Record yourself.",
-      "AMCAT mocks from Sep — treat as real exam day.",
+      'LRU Cache: must be able to code from scratch with zero notes. Critical interview Q.',
+      'Every weekend: Frontend + CS Fundamentals — both, not one.',
+      'SQL is a backend prerequisite — 40 problems minimum this phase.',
+      'Re-solve the 5 hardest problems from scratch each Sunday.',
     ],
   },
   {
     id: 4,
-    icon: "🎯",
-    color: "#4d96ff",
-    glow: "rgba(77,150,255,0.4)",
-    duration: "Sep 8 – Nov 16 · 70 days · 4-5 hrs/day",
-    mission: "AWS + Mock Interviews + Apply aggressively. Everything built toward this phase.",
-    checkpoint: "230+ LC · 3 deployed projects · 30+ applications · 6+ mock interviews done",
+    icon: '🌐',
+    color: '#4d96ff',
+    glow: 'rgba(77,150,255,0.4)',
+    codename: 'BACKEND SIEGE',
+    duration: 'Jul 21 – Sep 14 · 56 days · 3 hrs weekdays · 7 hrs weekends',
+    mission: 'OOP complete. Backend takes the OOP slot. Spring Boot REST → JPA → JWT → Docker. DSA: A2Z Steps 13–17. Major project skeleton.',
+    checkpoint: 'Spring Boot API with JWT auth deployed on Render · PostgreSQL on Supabase · React frontend on Vercel · A2Z Steps 13–17 complete',
+    threat: 'ELEVATED',
     weeks: [
-      { label: "Week 1", dates: "Sep 8–14", topics: "AWS EC2: create instance, deploy Spring Boot JAR", dsa: "DP Hard: MCM, Egg Drop, Bitonic", build: "API live on EC2 free tier", apt: "Mixed 20q" },
-      { label: "Week 2", dates: "Sep 15–21", topics: "AWS S3: upload from Spring Boot, pre-signed URLs", dsa: "DP: remaining + weak review", build: "File upload deployed in project", apt: "JPMC-style OA 60min" },
-      { label: "Week 3", dates: "Sep 22–28", topics: "Pramp mock interviews — first session booked", dsa: "Intervals: Merge, Non-Overlap, Meeting Rooms", build: "Resume: B/U/Y bullet format", apt: "Mixed 20q verbal heavy" },
-      { label: "Week 4", dates: "Oct 5–11", topics: "Gaurav Sen: Twitter + Uber + WhatsApp design", dsa: "Trie: implement + all 5 sheet problems", build: "All 3 bullets with live URLs on resume", apt: "AMCAT mock #2 — 90 min" },
-      { label: "Week 5", dates: "Oct 12–18", topics: "Apply Wave 1: JPMC, PayPal, Razorpay, Zepto", dsa: "Hard company-tagged LC — JPMC filter", build: "LinkedIn: 500+ connections push", apt: "Mixed 20q" },
-      { label: "Week 6", dates: "Oct 19–25", topics: "React advanced: Context, custom hooks, React Query", dsa: "NeetCode: 5 weakest patterns drilled", build: "Project 3: Full Stack + ML integrated", apt: "GFG OA 30q" },
-      { label: "Week 7", dates: "Oct 26–Nov 1", topics: "Pramp: 2 mock sessions this week", dsa: "LC Hard daily — company tagged", build: "SD verbal: URL + Twitter — 45 min each", apt: "IndiaBix 20q" },
-      { label: "Week 8", dates: "Nov 2–9", topics: "Portfolio polish + GitHub cleanup + README audit", dsa: "LC Hard daily", build: "All 3 projects: live URLs confirmed", apt: "AMCAT mock #3 final" },
-      { label: "Week 9", dates: "Nov 10–16", topics: "Pramp final session + HR finalization", dsa: "Review weakest 5 LC patterns", build: "Apply 10 more — 30+ total", apt: "IndiaBix 20q verbal" },
+      { label: 'Week 1–2', dates: 'Jul 21–Aug 1', topics: 'Spring Boot: Initializr, @RestController, JPA, @Entity, CRUD API, @ControllerAdvice, DTOs', dsa: 'A2Z Step 13: Trees (Binary Tree, BST all problems) · SDE Sheet starts', build: 'Student CRUD API — all endpoints tested in Postman', apt: 'IndiaBix 15q daily' },
+      { label: 'Week 3–4', dates: 'Aug 1–15', topics: 'Spring Security + JWT auth · @Service/@Repository layers · Docker + docker-compose', dsa: 'A2Z Step 14: BST hard · SDE Sheet problems weekly', build: 'Login/register → JWT token → protected endpoints · Docker image running', apt: 'IndiaBix 15q daily · Weekend: 30q mock' },
+      { label: 'Week 5–6', dates: 'Aug 15–Sep 1', topics: 'MongoDB + Redis caching · API versioning + Swagger · Spring Boot project: major entity + auth', dsa: 'A2Z Step 15: Tries · Step 16: Graphs (BFS/DFS/Topo/Dijkstra/Bellman-Ford/MST/DSU)', build: 'Major project: auth + CRUD + relationships working · React frontend connected', apt: 'IndiaBix 15q daily · AMCAT 60q full mock (weekend)' },
+      { label: 'Week 7–8', dates: 'Sep 1–14', topics: 'Spring Boot advanced: pagination, caching, WebSocket intro, rate limiting · Deploy to Render', dsa: 'A2Z Step 17: DP (1D, 2D, Knapsack, LCS, LIS, stocks, interval DP)', build: 'Backend deployed live · System Design PREVIEW: URL Shortener', apt: 'IndiaBix 15q daily · 60q full mock' },
     ],
     rules: [
-      "AWS on resume ONLY if deployed and working. No fake bullets.",
-      "Pramp mock interviews are non-negotiable. You need reps.",
-      "Apply 3-5 companies per week minimum. Consistent, not bursty.",
-      "JPMC runs Java-heavy OA. Spring Boot = your competitive edge.",
+      'Backend only starts after OOP is solid — Phase 4 = OOP prerequisite paid off.',
+      'Every Spring Boot endpoint: test in Postman before moving on.',
+      'Major project must have a live URL by end of Phase 4.',
+      'DP: do BOTH memoization and tabulation for every problem.',
     ],
   },
   {
     id: 5,
-    icon: "🚀",
-    color: "#ffd93d",
-    glow: "rgba(255,217,61,0.4)",
-    duration: "Nov 17 – Dec 31 · 45 days · 4-5 hrs/day",
-    mission: "Lock everything. 3 deployed projects. Resume finalized. January is interviews only.",
-    checkpoint: "Resume final · 3 live URLs · 50+ applications sent · January plan ready",
+    icon: '🚀',
+    color: '#ff6b6b',
+    glow: 'rgba(255,107,107,0.4)',
+    codename: 'FINAL APPROACH',
+    duration: 'Sep 15 – Nov 15 · 62 days · 3 hrs weekdays · 7 hrs weekends',
+    mission: 'A2Z finish by late Oct. Major project polished and deployed. System Design deepens. S79 preview starts Nov 1.',
+    checkpoint: '3 live projects with proper READMEs · System Design: 4 systems designed · A2Z complete · S79 problems 1–30 done',
+    threat: 'ELEVATED',
     weeks: [
-      { label: "Week 1", dates: "Nov 17–23", topics: "Portfolio audit: all projects live + README done", dsa: "LC Medium/day — keep engine warm", build: "3 live URLs on resume confirmed", apt: "5 companies applied + followups" },
-      { label: "Week 2", dates: "Nov 24–30", topics: "Resume lock + peer review from CS friend", dsa: "LC Medium/day", build: "GitHub: 3 best projects pinned", apt: "50+ total apps by Dec 14" },
-      { label: "Week 3", dates: "Dec 1–14", topics: "No new technology. Sharpen only.", dsa: "LC Hard x2/day", build: "January plan doc: companies + interview dates", apt: "Applications ongoing" },
-      { label: "Week 4", dates: "Dec 15–31", topics: "Final week. You're ready. Sleep 8 hours.", dsa: "5 weakest — nail them", build: "January interview plan locked", apt: "Rest. Prepare mentally." },
+      { label: 'Week 1–3', dates: 'Sep 15–Oct 5', topics: 'Major project: final features, bug fixes, README, Lighthouse 90+', dsa: 'SDE Sheet completion sprint · Re-solve A2Z weak spots', build: 'All 3 projects with live URLs + screenshots deployed', apt: 'IndiaBix 15q daily · AMCAT mock #2' },
+      { label: 'Week 4–6', dates: 'Oct 5–Nov 1', topics: 'System Design deep dive: CAP, Consistent Hashing, DB Sharding, Caching, Message Queues', dsa: 'SDE Sheet hard problems · Company-tagged LC (JPMC/PayPal filter)', build: 'System Design docs: URL Shortener, Twitter, Uber, WhatsApp', apt: 'IndiaBix 15q daily · OA simulation weekly' },
+      { label: 'Week 7–8', dates: 'Nov 1–15', topics: 'Resume update · LinkedIn push · S79 begins · Apply to first companies', dsa: 'S79 problems 1–30 · Blind75 preview', build: 'Resume: LaTeX updated with project metrics · 5+ applications submitted', apt: 'IndiaBix 15q daily · 60q full mock' },
     ],
     rules: [
-      "No new technology in Phase 5. Zero.",
-      "If a project has no live URL, remove it from resume.",
-      "January = interviews only. Building phase is closed.",
-      "50+ applications minimum before December ends.",
+      'System Design: always design on paper BEFORE Googling the solution.',
+      'No new tech this phase — deepen what exists.',
+      'Every project bullet on resume needs a live URL. No exceptions.',
+      'S79 starts Nov 1 — treat each problem as a real interview question.',
     ],
   },
   {
     id: 6,
-    icon: "💎",
-    color: "#ff6b9d",
-    glow: "rgba(255,107,157,0.4)",
-    duration: "Jan 2027 · 31 days · Full day",
-    mission: "Drill only. No new topics. Trust the 8 months you built. This is what it all was for.",
-    checkpoint: "JPMC / PayPal / Top MNC internship offer. That's the only metric.",
+    icon: '🎯',
+    color: '#ffd93d',
+    glow: 'rgba(255,217,61,0.4)',
+    codename: 'KILL SHOT',
+    duration: 'Nov 16 – Jan 31 2027 · 77 days · 4 hrs intensified',
+    mission: 'S79 + Blind75. Company-tagged problems. Mock interviews weekly. Apply every week. Everything converges here.',
+    checkpoint: 'S79 complete · Blind75 complete · 30+ applications sent · 6+ mock interviews done · Offer received',
+    threat: 'MAX',
     weeks: [
-      { label: "Week 1", dates: "Jan 1–7", topics: "2 Hard LC/day + System Design 45min verbal", dsa: "JPMC/PayPal tagged — arrays, strings, greedy", build: "Pramp daily", apt: "Company OA patterns" },
-      { label: "Week 2", dates: "Jan 8–14", topics: "JPMC/PayPal OA pattern bank", dsa: "Hard daily — no cherry picking", build: "Pramp every 2 days", apt: "Full mock day simulation" },
-      { label: "Week 3", dates: "Jan 15–21", topics: "Full simulation: technical + SD + HR back to back", dsa: "Hard daily", build: "3 full mock rounds this week", apt: "OA simulation" },
-      { label: "Week 4", dates: "Jan 22–31", topics: "Sharpen weakest 5 only. Trust the process.", dsa: "5 weakest patterns — nail them", build: "Final Pramp session", apt: "You're ready." },
+      { label: 'Week 1–4', dates: 'Nov 16–Dec 14', topics: 'S79: Arrays → Binary Search → Strings → LL → Stack/Queue → Trees · Java theory daily', dsa: 'S79 + Blind75 parallel · 2 problems/day minimum', build: 'Apply 3 companies/week · Pramp mock every 2 weeks', apt: 'IndiaBix 15q daily · OA simulation weekly' },
+      { label: 'Week 5–8', dates: 'Dec 15–Jan 15', topics: 'System Design verbal: 45-min spoken answers · HR STAR answers written + rehearsed', dsa: 'S79 + B75 complete · Company-tagged LC daily', build: 'Apply 3+ companies/week · Pramp mock weekly now', apt: 'AMCAT full mock · Full OA simulations' },
+      { label: 'Week 9–11', dates: 'Jan 15–31', topics: 'DRILL only. No new topics. Trust the 8 months.', dsa: 'Speed-run: any S79/B75 problem in 30 min · 5 weakest patterns nailed', build: 'Final Pramp sessions · Resume PDF final pass · 30+ apps confirmed', apt: "You're ready. Sleep 8 hrs. Trust the process." },
     ],
     rules: [
-      "This phase is DRILL not LEARN. New topics will hurt you.",
-      "Mock interviews every 2 days minimum.",
-      "Sleep 8 hours. DP under pressure needs a rested brain.",
-      "Trust the 8 months. You built this from nothing.",
+      'S79 + Blind75 = interview sharpness. SDE Sheet = interview breadth. Do both.',
+      'Mock interviews every 2 days minimum from Jan. Speed matters.',
+      'Apply 3+ companies per week. Consistent, not bursty.',
+      'No new tech in Phase 6. This phase is DRILL not LEARN.',
     ],
   },
 ]
 
-function PhaseNode({ phase, detail, index, isActive, onClick, totalPhases }) {
-  const nodeRef = useRef(null)
-  const [visible, setVisible] = useState(false)
+const PHASE_RANGES = [
+  { start: '2026-05-17', end: '2026-05-24' },
+  { start: '2026-05-25', end: '2026-06-14' },
+  { start: '2026-06-15', end: '2026-07-20' },
+  { start: '2026-07-21', end: '2026-09-14' },
+  { start: '2026-09-15', end: '2026-11-15' },
+  { start: '2026-11-16', end: '2027-01-31' },
+]
 
+const THREAT_META = {
+  CRITICAL: { color: '#ff2d78', label: '🔴 CRITICAL' },
+  HIGH:     { color: '#ff6b1a', label: '🟠 HIGH' },
+  ELEVATED: { color: '#ffd93d', label: '🟡 ELEVATED' },
+  MAX:      { color: '#ff2d78', label: '☠ MAXIMUM' },
+}
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+.pv *, .pv *::before, .pv *::after { box-sizing: border-box; }
+.pv { font-family: 'Rajdhani', sans-serif; }
+
+/* ── HEADER ── */
+.pv-mission-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px; color: rgba(0,255,80,.65);
+  display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+}
+.pv-pulse {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #00ff50; box-shadow: 0 0 8px #00ff50;
+  animation: pvBlink 1.4s step-start infinite;
+}
+@keyframes pvBlink { 50% { opacity: 0; box-shadow: none; } }
+
+.pv-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(20px,3.5vw,28px); font-weight: 900;
+  color: #fff; letter-spacing: 2px; margin: 0 0 4px;
+  text-shadow: 0 0 28px rgba(0,255,80,.2);
+}
+.pv-subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: rgba(0,255,80,.3); letter-spacing: 2px; margin-bottom: 14px;
+}
+
+/* ── PHASE PILLS ── */
+.pv-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 28px; }
+.pv-pill {
+  font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px;
+  padding: 5px 12px; border: 1px solid; cursor: pointer; transition: all .2s;
+  background: transparent; position: relative; overflow: hidden;
+}
+.pv-pill::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+  transition: left .4s ease;
+}
+.pv-pill:hover::before { left: 100%; }
+
+/* ── TIMELINE SPINE ── */
+.pv-timeline { position: relative; padding-left: 56px; }
+.pv-spine {
+  position: absolute; left: 20px; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg,
+    rgba(249,115,22,.6), rgba(168,85,247,.6), rgba(107,203,119,.6),
+    rgba(77,150,255,.6), rgba(255,107,107,.6), rgba(255,217,61,.6));
+}
+.pv-spine-glow {
+  position: absolute; left: 18px; top: 0; bottom: 0; width: 5px;
+  background: linear-gradient(180deg,
+    rgba(249,115,22,.12), rgba(168,85,247,.12), rgba(107,203,119,.12),
+    rgba(77,150,255,.12), rgba(255,107,107,.12), rgba(255,217,61,.12));
+  filter: blur(3px);
+}
+
+/* ── NODE ── */
+.pv-node-wrap {
+  position: relative; margin-bottom: 6px;
+  opacity: 0; transform: translateX(-16px);
+  animation: pvNodeIn .45s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes pvNodeIn { to { opacity: 1; transform: translateX(0); } }
+
+/* Dot on spine */
+.pv-spine-dot {
+  position: absolute; left: -44px; top: 16px;
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--nc); background: #020408;
+  box-shadow: 0 0 10px var(--nc), 0 0 20px var(--nc-dim);
+  transition: all .3s;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.pv-spine-dot.active {
+  width: 16px; height: 16px; left: -46px; top: 14px;
+  background: var(--nc-dim);
+  box-shadow: 0 0 14px var(--nc), 0 0 28px var(--nc-dim), 0 0 48px var(--nc-dim);
+  animation: pvDotPulse 2s ease-in-out infinite;
+}
+@keyframes pvDotPulse { 50% { box-shadow: 0 0 22px var(--nc), 0 0 44px var(--nc-dim); } }
+
+.pv-spine-dot-current {
+  position: absolute; left: -47px; top: 12px;
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid var(--nc); opacity: .3;
+  animation: pvCurrentRing 2s ease-in-out infinite;
+}
+@keyframes pvCurrentRing { 0%,100% { transform: scale(1); opacity: .3; } 50% { transform: scale(1.5); opacity: 0; } }
+
+/* ── CARD ── */
+.pv-card {
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.06);
+  border-left: 2px solid var(--nc);
+  padding: 0;
+  transition: all .25s ease;
+  position: relative; overflow: hidden;
+  cursor: pointer;
+}
+.pv-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, var(--nc), transparent);
+  opacity: .4;
+}
+.pv-card:hover { border-color: var(--nc); box-shadow: 0 0 20px var(--nc-dim); }
+.pv-card.active {
+  background: var(--nc-bg);
+  border-color: var(--nc);
+  box-shadow: 0 0 32px var(--nc-dim), inset 0 0 32px rgba(0,0,0,.4);
+}
+
+/* Sweep animation */
+.pv-card::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.02), transparent);
+  pointer-events: none;
+}
+.pv-card:hover::after { animation: pvCardSweep .6s ease forwards; }
+@keyframes pvCardSweep { to { left: 140%; } }
+
+/* ── CARD HEADER ── */
+.pv-card-hdr {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; position: relative;
+}
+
+.pv-phase-num {
+  font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900;
+  color: var(--nc); opacity: .18; line-height: 1; flex-shrink: 0;
+  text-shadow: 0 0 20px var(--nc);
+  transition: opacity .3s;
+}
+.pv-card.active .pv-phase-num { opacity: .35; }
+
+.pv-card-meta { flex: 1; min-width: 0; }
+
+.pv-codename {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: 3px;
+  color: var(--nc); opacity: .8; margin-bottom: 3px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.pv-active-tag {
+  font-family: 'Share Tech Mono', monospace; font-size: 7px; letter-spacing: 1px;
+  color: #ff6b1a; background: rgba(255,107,26,.12);
+  border: 1px solid rgba(255,107,26,.3); padding: 1px 6px;
+  animation: pvTagBlink 1.8s ease-in-out infinite;
+}
+@keyframes pvTagBlink { 50% { opacity: .4; } }
+
+.pv-phase-name {
+  font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: #fff;
+  margin-bottom: 3px; letter-spacing: .5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.pv-duration {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px;
+  color: rgba(255,255,255,.25); letter-spacing: .5px;
+}
+
+.pv-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+
+.pv-threat {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: 1px;
+  padding: 2px 8px; border: 1px solid; border-color: var(--tc); color: var(--tc);
+}
+
+.pv-progress-ring { position: relative; width: 42px; height: 42px; flex-shrink: 0; }
+.pv-progress-ring svg { position: absolute; inset: 0; }
+.pv-ring-center {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; color: var(--nc);
+}
+
+.pv-chevron {
+  font-size: 10px; color: var(--nc); opacity: .5;
+  transition: transform .3s, opacity .3s;
+  font-family: 'Share Tech Mono', monospace;
+}
+.pv-card.active .pv-chevron { transform: rotate(90deg); opacity: 1; }
+
+/* ── PROGRESS BAR ── */
+.pv-prog-bar-wrap { padding: 0 16px 12px; }
+.pv-prog-bar {
+  height: 2px; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.04); overflow: hidden; position: relative;
+}
+.pv-prog-fill {
+  height: 100%; background: var(--nc);
+  box-shadow: 0 0 6px var(--nc);
+  transform-origin: left;
+  transition: transform 1.2s cubic-bezier(.34,1.56,.64,1) .3s;
+  position: relative; overflow: hidden;
+}
+.pv-prog-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: pvShimmer 2s linear 1.5s infinite;
+}
+@keyframes pvShimmer { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+
+/* ── EXPANDED BODY ── */
+.pv-body {
+  padding: 0 16px 16px;
+  animation: pvBodyIn .35s cubic-bezier(.34,1.56,.64,1);
+  border-top: 1px solid rgba(255,255,255,.04);
+  padding-top: 14px;
+}
+@keyframes pvBodyIn { from { opacity: 0; transform: translateY(-8px); } }
+
+.pv-mission-block {
+  background: var(--nc-bg); border: 1px solid var(--nc-border);
+  border-left: 3px solid var(--nc);
+  padding: 10px 14px; margin-bottom: 14px;
+}
+.pv-mission-label {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: 2px;
+  color: var(--nc); margin-bottom: 5px;
+}
+.pv-mission-text { font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.6; }
+
+/* ── CHECKPOINT ── */
+.pv-checkpoint {
+  background: rgba(57,255,20,.04); border: 1px solid rgba(57,255,20,.12);
+  padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 10px; align-items: flex-start;
+}
+.pv-checkpoint-label {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: 2px;
+  color: #39ff14; margin-bottom: 4px;
+}
+.pv-checkpoint-text { font-size: 11px; color: rgba(255,255,255,.55); line-height: 1.5; }
+
+/* ── WEEKS ── */
+.pv-weeks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.pv-week {
+  background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.04);
+  border-left: 2px solid var(--nc); padding: 10px 13px;
+  animation: pvBodyIn .3s ease both;
+}
+.pv-week-hdr {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.pv-week-label {
+  font-family: 'Orbitron', monospace; font-size: 9px; color: var(--nc); font-weight: 700;
+}
+.pv-week-dates {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; color: rgba(255,255,255,.2);
+}
+.pv-week-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.pv-week-slot {
+  background: var(--ws-bg); border: 1px solid var(--ws-border);
+  padding: 7px 9px;
+}
+.pv-week-slot-label {
+  font-family: 'Share Tech Mono', monospace; font-size: 7px; letter-spacing: 1px;
+  color: var(--ws-color); margin-bottom: 3px;
+}
+.pv-week-slot-text { font-size: 10px; color: rgba(255,255,255,.5); line-height: 1.45; }
+
+/* ── SECTION LABEL ── */
+.pv-section {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 2px; color: rgba(0,255,80,.25); text-transform: uppercase;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.pv-section::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(0,255,80,.1), transparent); }
+
+/* ── RULES ── */
+.pv-rules { display: flex; flex-direction: column; gap: 5px; }
+.pv-rule {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 11px; color: rgba(255,255,255,.45); line-height: 1.55;
+  padding: 5px 9px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.04);
+}
+.pv-rule-arrow { color: var(--nc); flex-shrink: 0; font-family: 'Share Tech Mono', monospace; font-size: 10px; margin-top: 1px; }
+
+/* ── GOAL BLOCK ── */
+.pv-goal {
+  margin-top: 24px;
+  background: rgba(0,0,0,.8);
+  border: 1px solid rgba(255,217,61,.25);
+  padding: 16px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  position: relative; overflow: hidden;
+  animation: pvGoalGlow 5s ease-in-out infinite;
+}
+@keyframes pvGoalGlow {
+  0%,100% { box-shadow: 0 0 12px rgba(255,217,61,.06); }
+  50%      { box-shadow: 0 0 32px rgba(255,217,61,.2); }
+}
+.pv-goal::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,217,61,.03), transparent);
+  animation: pvGoalSweep 3s linear infinite;
+}
+@keyframes pvGoalSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.pv-goal-left { }
+.pv-goal-tag {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: 2px;
+  color: rgba(255,217,61,.5); margin-bottom: 4px;
+}
+.pv-goal-title {
+  font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 900;
+  color: #ffd93d; text-shadow: 0 0 16px rgba(255,217,61,.5); letter-spacing: 1px;
+}
+.pv-goal-right {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; color: rgba(255,217,61,.3);
+  text-align: right; line-height: 2;
+}
+`
+
+function useCSS() {
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), index * 120)
-    return () => clearTimeout(timer)
-  }, [index])
+    if (document.getElementById('pv-styles')) return
+    const tag = document.createElement('style')
+    tag.id = 'pv-styles'
+    tag.textContent = CSS
+    document.head.appendChild(tag)
+  }, [])
+}
 
-  const isLeft = index % 2 === 0
+function ProgressRing({ pct, color, size = 42 }) {
+  const r = (size / 2) - 5
+  const circ = 2 * Math.PI * r
+  const [offset, setOffset] = useState(circ)
+  useEffect(() => {
+    const id = setTimeout(() => setOffset(circ * (1 - pct / 100)), 400)
+    return () => clearTimeout(id)
+  }, [pct, circ])
+  return (
+    <div className="pv-progress-ring" style={{ width: size, height: size }}>
+      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="3" />
+        <circle
+          cx={size/2} cy={size/2} r={r} fill="none"
+          stroke={color} strokeWidth="3" strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          transform={`rotate(-90 ${size/2} ${size/2})`}
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(.34,1.56,.64,1) .5s', filter: `drop-shadow(0 0 4px ${color})` }}
+        />
+      </svg>
+      <div className="pv-ring-center" style={{ '--nc': color }}>{pct}%</div>
+    </div>
+  )
+}
+
+function PhaseCard({ detail, phase, index, isActive, isCurrent, progressPct, onClick }) {
+  const [scaleBar, setScaleBar] = useState(false)
+  useEffect(() => { if (isActive || progressPct > 0) { const id = setTimeout(() => setScaleBar(true), 100); return () => clearTimeout(id) } }, [isActive, progressPct])
+
+  const threat = THREAT_META[detail.threat] || THREAT_META.ELEVATED
+  const nc = phase.color
+  const ncDim = phase.glow
+  const ncBg = `${nc}08`
+  const ncBorder = `${nc}20`
 
   return (
     <div
-      ref={nodeRef}
-      style={{
-        display: 'flex',
-        flexDirection: isLeft ? 'row' : 'row-reverse',
-        alignItems: 'flex-start',
-        gap: 0,
-        marginBottom: 0,
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(30px)',
-        transition: 'all 0.6s cubic-bezier(0.34,1.56,0.64,1)',
-      }}
+      className="pv-node-wrap"
+      style={{ '--nc': nc, '--nc-dim': ncDim, '--nc-bg': ncBg, '--nc-border': ncBorder, animationDelay: `${index * 80}ms` }}
     >
-      {/* Content card */}
-      <div style={{ flex: 1, padding: isLeft ? '0 24px 0 0' : '0 0 0 24px' }}>
-        <div
-          onClick={onClick}
-          style={{
-            background: isActive
-              ? `linear-gradient(135deg, ${phase.color}18, ${phase.color}08)`
-              : 'rgba(255,255,255,0.02)',
-            border: `1px solid ${isActive ? phase.color + '50' : 'rgba(255,255,255,0.06)'}`,
-            borderRadius: 16,
-            padding: '18px 20px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: isActive ? `0 0 30px ${phase.color}20` : 'none',
-          }}
-          onMouseEnter={e => {
-            if (!isActive) {
-              e.currentTarget.style.background = `${phase.color}10`
-              e.currentTarget.style.borderColor = `${phase.color}30`
-            }
-          }}
-          onMouseLeave={e => {
-            if (!isActive) {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
-            }
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <span style={{ fontSize: 20 }}>{phase.icon}</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{
-                  fontSize: 10, fontFamily: 'JetBrains Mono', color: phase.color,
-                  background: `${phase.color}18`, padding: '2px 8px', borderRadius: 10, letterSpacing: 1,
-                }}>PHASE {phase.id}</span>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'JetBrains Mono' }}>
-                  {detail.weeks.length} weeks
-                </span>
-              </div>
-              <div style={{ fontFamily: 'Syne', fontSize: 15, color: '#fff', fontWeight: 700, marginTop: 2 }}>
-                {phase.name}
-              </div>
+      {/* Spine dot */}
+      <div
+        className={`pv-spine-dot${isActive || isCurrent ? ' active' : ''}`}
+        style={{ '--nc': nc, '--nc-dim': ncDim }}
+        onClick={onClick}
+      >
+        {isCurrent && <div className="pv-spine-dot-current" style={{ '--nc': nc }} />}
+      </div>
+
+      {/* Card */}
+      <div className={`pv-card${isActive ? ' active' : ''}`} style={{ '--nc': nc, '--nc-dim': ncDim, '--nc-bg': ncBg, '--nc-border': ncBorder }}>
+
+        {/* Header */}
+        <div className="pv-card-hdr" onClick={onClick}>
+          <div className="pv-phase-num">{String(phase.id).padStart(2,'0')}</div>
+
+          <div className="pv-card-meta">
+            <div className="pv-codename">
+              {phase.icon} {detail.codename}
+              {isCurrent && <span className="pv-active-tag">● ACTIVE</span>}
             </div>
+            <div className="pv-phase-name">{phase.name || phase.label}</div>
+            <div className="pv-duration">{detail.duration}</div>
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'JetBrains Mono', marginBottom: 6 }}>
-            {detail.duration}
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-            {detail.mission}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-            <span style={{ fontSize: 10, color: phase.color, fontFamily: 'JetBrains Mono' }}>
-              {isActive ? '▼ collapse' : '▶ expand weeks'}
-            </span>
+
+          <div className="pv-card-right">
+            <div className="pv-threat" style={{ '--tc': threat.color }}>{threat.label}</div>
+            {progressPct > 0 && <ProgressRing pct={progressPct} color={nc} />}
+            <div className="pv-chevron">▶</div>
           </div>
         </div>
 
-        {/* Expanded weeks */}
+        {/* Progress bar (always) */}
+        <div className="pv-prog-bar-wrap">
+          <div className="pv-prog-bar">
+            <div
+              className="pv-prog-fill"
+              style={{
+                '--nc': nc,
+                transform: `scaleX(${scaleBar ? progressPct / 100 : 0})`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Expanded body */}
         {isActive && (
-          <div style={{
-            marginTop: 12,
-            animation: 'slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-          }}>
+          <div className="pv-body" style={{ '--nc': nc, '--nc-bg': ncBg, '--nc-border': ncBorder }}>
+
+            {/* Mission */}
+            <div className="pv-mission-block">
+              <div className="pv-mission-label">⚡ MISSION OBJECTIVE</div>
+              <div className="pv-mission-text">{detail.mission}</div>
+            </div>
+
             {/* Checkpoint */}
-            <div style={{
-              background: `${phase.color}10`,
-              border: `1px solid ${phase.color}30`,
-              borderRadius: 10, padding: '10px 14px', marginBottom: 12,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
+            <div className="pv-checkpoint">
               <span style={{ fontSize: 14 }}>🏆</span>
               <div>
-                <div style={{ fontSize: 9, color: phase.color, fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 2 }}>PHASE CHECKPOINT</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{detail.checkpoint}</div>
+                <div className="pv-checkpoint-label">PHASE CHECKPOINT</div>
+                <div className="pv-checkpoint-text">{detail.checkpoint}</div>
               </div>
             </div>
 
             {/* Weeks */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            <div className="pv-section">Week Breakdown</div>
+            <div className="pv-weeks">
               {detail.weeks.map((week, wi) => (
-                <div key={wi} style={{
-                  background: 'rgba(255,255,255,0.025)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 10, padding: '12px 14px',
-                  borderLeft: `3px solid ${phase.color}60`,
-                  animation: `slideDown 0.3s ${wi * 0.05}s both`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'Syne', fontSize: 13, color: phase.color, fontWeight: 700 }}>{week.label}</span>
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'JetBrains Mono' }}>{week.dates}</span>
-                    </div>
+                <div key={wi} className="pv-week" style={{ '--nc': nc, animationDelay: `${wi * 60}ms` }}>
+                  <div className="pv-week-hdr">
+                    <span className="pv-week-label">{week.label}</span>
+                    <span className="pv-week-dates">{week.dates}</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <div className="pv-week-grid">
                     {[
-                      { icon: '📺', label: 'LEARN', val: week.topics, color: '#4d96ff' },
-                      { icon: '⚡', label: 'DSA', val: week.dsa, color: '#ff6b1a' },
-                      { icon: '🔨', label: 'BUILD', val: week.build, color: '#c77dff' },
-                      { icon: '🧮', label: 'APTITUDE', val: week.apt, color: '#6bcb77' },
-                    ].map(item => (
-                      <div key={item.label} style={{
-                        background: `${item.color}08`,
-                        border: `1px solid ${item.color}18`,
-                        borderRadius: 8, padding: '8px 10px',
-                      }}>
-                        <div style={{ fontSize: 9, color: item.color, fontFamily: 'JetBrains Mono', letterSpacing: 0.5, marginBottom: 4 }}>
-                          {item.icon} {item.label}
-                        </div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>{item.val}</div>
+                      { icon: '📺', label: 'LEARN', val: week.topics, bg: 'rgba(77,150,255,.06)', border: 'rgba(77,150,255,.15)', c: '#4d96ff' },
+                      { icon: '⚡', label: 'DSA',   val: week.dsa,    bg: 'rgba(255,107,26,.06)', border: 'rgba(255,107,26,.15)', c: '#ff6b1a' },
+                      { icon: '🔨', label: 'BUILD', val: week.build,  bg: 'rgba(168,85,247,.06)', border: 'rgba(168,85,247,.15)', c: '#a855f7' },
+                      { icon: '🧮', label: 'APT',   val: week.apt,    bg: 'rgba(107,203,119,.06)', border: 'rgba(107,203,119,.15)', c: '#6bcb77' },
+                    ].map(slot => (
+                      <div key={slot.label} className="pv-week-slot"
+                        style={{ '--ws-bg': slot.bg, '--ws-border': slot.border, '--ws-color': slot.c }}>
+                        <div className="pv-week-slot-label">{slot.icon} {slot.label}</div>
+                        <div className="pv-week-slot-text">{slot.val}</div>
                       </div>
                     ))}
                   </div>
@@ -289,174 +611,115 @@ function PhaseNode({ phase, detail, index, isActive, onClick, totalPhases }) {
             </div>
 
             {/* Rules */}
-            <div style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 10, padding: '12px 14px',
-            }}>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 8 }}>
-                ⚔️ PHASE RULES — NON-NEGOTIABLE
-              </div>
+            <div className="pv-section">Phase Rules — Non-Negotiable</div>
+            <div className="pv-rules">
               {detail.rules.map((rule, ri) => (
-                <div key={ri} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: ri < detail.rules.length - 1 ? 6 : 0 }}>
-                  <span style={{ color: phase.color, fontSize: 12, marginTop: 1, flexShrink: 0 }}>→</span>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{rule}</span>
+                <div key={ri} className="pv-rule" style={{ '--nc': nc }}>
+                  <span className="pv-rule-arrow">→</span>
+                  <span>{rule}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
       </div>
-
-      {/* Center spine + node */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 60 }}>
-        {/* Top connector */}
-        {index > 0 && (
-          <div style={{
-            width: 2,
-            height: 24,
-            background: `linear-gradient(to bottom, ${PHASES[index-1].color}60, ${phase.color}60)`,
-          }} />
-        )}
-        {index === 0 && <div style={{ height: 24 }} />}
-
-        {/* Node circle */}
-        <div
-          onClick={onClick}
-          style={{
-            width: 44, height: 44, borderRadius: '50%',
-            background: isActive
-              ? `radial-gradient(circle, ${phase.color}40, ${phase.color}10)`
-              : 'rgba(255,255,255,0.04)',
-            border: `2px solid ${isActive ? phase.color : phase.color + '50'}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, cursor: 'pointer', flexShrink: 0,
-            boxShadow: isActive ? `0 0 20px ${phase.color}60, 0 0 40px ${phase.color}30` : 'none',
-            transition: 'all 0.3s ease',
-            animation: isActive ? 'pulse-node 2s ease-in-out infinite' : 'none',
-          }}
-        >
-          {phase.icon}
-        </div>
-
-        {/* Bottom connector */}
-        {index < totalPhases - 1 && (
-          <div style={{
-            width: 2,
-            flex: 1,
-            minHeight: 40,
-            background: `linear-gradient(to bottom, ${phase.color}60, ${PHASES[index+1]?.color}30)`,
-          }} />
-        )}
-      </div>
-
-      {/* Spacer for opposite side */}
-      <div style={{ flex: 1 }} />
     </div>
   )
 }
 
 export default function PhasesView() {
-  const [activePhase, setActivePhase] = useState(null)
-  const [headerVisible, setHeaderVisible] = useState(false)
+  useCSS()
+  const today = getTodayIST()
+  const currentPhaseId = getPhase(today) ?? 1
+  const [activePhase, setActivePhase] = useState(currentPhaseId)
+  const [headerVis, setHeaderVis] = useState(false)
 
-  useEffect(() => {
-    setTimeout(() => setHeaderVisible(true), 100)
-  }, [])
+  useEffect(() => { setTimeout(() => setHeaderVis(true), 80) }, [])
 
-  const togglePhase = (id) => {
-    setActivePhase(prev => prev === id ? null : id)
+  const toggle = id => setActivePhase(prev => prev === id ? null : id)
+
+  const getProgressPct = (start, end) => {
+    if (today < start) return 0
+    if (today > end) return 100
+    const total = Math.floor((new Date(end) - new Date(start)) / 86400000)
+    const done  = Math.floor((new Date(today) - new Date(start)) / 86400000)
+    return Math.round((done / total) * 100)
   }
 
   return (
-    <div style={{ position: 'relative' }}>
-      <style>{`
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse-node {
-          0%, 100% { box-shadow: 0 0 20px var(--nc, #f97316), 0 0 40px var(--nc, #f97316); }
-          50% { box-shadow: 0 0 30px var(--nc, #f97316), 0 0 60px var(--nc, #f97316); }
-        }
-        @keyframes float-badge {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-4px); }
-        }
-      `}</style>
-
+    <div className="pv">
       {/* Header */}
       <div style={{
-        marginBottom: 32,
-        opacity: headerVisible ? 1 : 0,
-        transform: headerVisible ? 'translateY(0)' : 'translateY(-20px)',
-        transition: 'all 0.6s ease',
+        marginBottom: 24,
+        opacity: headerVis ? 1 : 0, transform: headerVis ? 'none' : 'translateY(-12px)',
+        transition: 'all .5s ease',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-          <div style={{
-            fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 2,
-            color: '#ff6b1a', background: 'rgba(255,107,26,0.1)',
-            border: '1px solid rgba(255,107,26,0.25)', padding: '4px 12px', borderRadius: 20,
-            animation: 'float-badge 3s ease-in-out infinite',
-          }}>
-            BATTLE MAP · 8 MONTHS · JPMC READY
-          </div>
+        <div className="pv-mission-badge">
+          <div className="pv-pulse" />
+          BATTLE MAP · 8 MONTHS · MICROSOFT READY
         </div>
-        <h2 style={{
-          fontFamily: 'Syne', fontSize: 'clamp(22px,4vw,34px)', fontWeight: 800,
-          color: '#fff', margin: '0 0 8px', lineHeight: 1.1,
-        }}>
-          Your Complete Battle Plan
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, margin: 0, fontFamily: 'JetBrains Mono' }}>
-          Click any phase to expand week-by-week targets · Apr 2026 → Jan 2027
-        </p>
+        <h2 className="pv-title">Complete Battle Plan</h2>
+        <p className="pv-subtitle">MAY 17 2026 → JAN 31 2027 · SELECT PHASE TO EXPAND</p>
 
-        {/* Phase overview pills */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
-          {PHASES.map(p => (
-            <button key={p.id} onClick={() => togglePhase(p.id)} style={{
-              fontSize: 11, fontFamily: 'JetBrains Mono',
-              background: activePhase === p.id ? `${p.color}20` : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${activePhase === p.id ? p.color + '50' : 'rgba(255,255,255,0.08)'}`,
-              color: activePhase === p.id ? p.color : 'rgba(255,255,255,0.4)',
-              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: activePhase === p.id ? `0 0 12px ${p.color}30` : 'none',
-            }}>
-              {p.icon} P{p.id} · {p.name}
-            </button>
-          ))}
+        {/* Phase pills */}
+        <div className="pv-pills">
+          {PHASES.map(p => {
+            const active = activePhase === p.id
+            const current = p.id === currentPhaseId
+            return (
+              <button
+                key={p.id}
+                className="pv-pill"
+                onClick={() => toggle(p.id)}
+                style={{
+                  color: active ? p.color : 'rgba(255,255,255,.3)',
+                  borderColor: active ? p.color : 'rgba(255,255,255,.08)',
+                  background: active ? `${p.color}12` : 'transparent',
+                  boxShadow: active ? `0 0 12px ${p.glow}` : 'none',
+                  fontFamily: "'Share Tech Mono', monospace",
+                }}
+              >
+                {p.icon} P{p.id}{current ? ' ●' : ''}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Timeline map */}
-      <div style={{ position: 'relative', paddingBottom: 40 }}>
+      {/* Timeline */}
+      <div className="pv-timeline">
+        <div className="pv-spine-glow" />
+        <div className="pv-spine" />
+
         {PHASES.map((phase, index) => {
           const detail = PHASE_DETAILS.find(d => d.id === phase.id)
+          if (!detail) return null
+          const range = PHASE_RANGES[index]
+          const pct = getProgressPct(range.start, range.end)
           return (
-            <PhaseNode
+            <PhaseCard
               key={phase.id}
               phase={phase}
               detail={detail}
               index={index}
               isActive={activePhase === phase.id}
-              onClick={() => togglePhase(phase.id)}
-              totalPhases={PHASES.length}
+              isCurrent={phase.id === currentPhaseId}
+              progressPct={pct}
+              onClick={() => toggle(phase.id)}
             />
           )
         })}
+      </div>
 
-        {/* End node */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #ff6b1a, #ffd93d, #ff6b9d)',
-            borderRadius: 12, padding: '12px 28px',
-            fontFamily: 'Syne', fontSize: 15, fontWeight: 800, color: '#000',
-            boxShadow: '0 0 30px rgba(255,107,26,0.4)',
-          }}>
-            🏆 JPMC / PayPal Offer
-          </div>
+      {/* Final objective */}
+      <div className="pv-goal">
+        <div className="pv-goal-left">
+          <div className="pv-goal-tag">OPERATION CRACKIT · FINAL OBJECTIVE</div>
+          <div className="pv-goal-title">🎯 Microsoft / Top MNC Offer</div>
+        </div>
+        <div className="pv-goal-right">
+          260 DAYS · 6 PHASES<br />
+          JAN 31 2027
         </div>
       </div>
     </div>

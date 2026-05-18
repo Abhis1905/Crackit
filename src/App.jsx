@@ -22,7 +22,8 @@ export default function App() {
   const todayStr = getTodayIST()
   const dayNum = getDayNumber(todayStr)
   const totalDays = getTotalDays()
-  const isInProgram = todayStr >= '2026-04-14' && todayStr <= '2026-12-31'
+  const isInProgram = todayStr >= '2026-05-17' && todayStr <= '2027-01-31'
+
 
   useEffect(() => {
     getAllProgress().then(data => {
@@ -41,15 +42,7 @@ export default function App() {
   const isViewingToday = selectedDate === todayStr
 
   // Current phase detection
-  const currentPhase = PHASES.find(p => {
-    if (p.id === 1) return todayStr >= '2026-04-14' && todayStr <= '2026-06-01'
-    if (p.id === 2) return todayStr >= '2026-06-02' && todayStr <= '2026-07-13'
-    if (p.id === 3) return todayStr >= '2026-07-14' && todayStr <= '2026-09-07'
-    if (p.id === 4) return todayStr >= '2026-09-08' && todayStr <= '2026-11-16'
-    if (p.id === 5) return todayStr >= '2026-11-17' && todayStr <= '2026-12-31'
-    if (p.id === 6) return todayStr >= '2027-01-01'
-    return false
-  })
+  const currentPhase = PHASES.find(p => todayStr >= p.start && todayStr <= p.end);
 
   const progressPct = isInProgram ? Math.round((dayNum / totalDays) * 100) : 0
 
